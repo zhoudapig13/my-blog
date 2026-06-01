@@ -6,7 +6,7 @@ tags:
   - "transformer"
   - "通用模型"
 date: "2026-06-01"
-pdf: ""
+pdf: "resources/A Tabular Foundation Model for In-Context Learning on Large Data.pdf"
 ---
 ## 2. 相关工作
 
