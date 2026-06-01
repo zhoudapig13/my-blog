@@ -430,23 +430,33 @@ body[data-theme="garden"] .theme-strip h1 {
   display: grid;
   gap: 12px;
   padding: 18px;
-  transform: translateY(0) scale(1);
+  --card-lift: 0px;
+  --card-scale: 1;
+  --card-shadow-alpha: 0.09;
+  transform: translateY(var(--card-lift)) scale(var(--card-scale));
   transition:
-    transform 180ms ease,
-    box-shadow 180ms ease,
+    transform 130ms ease-out,
+    box-shadow 130ms ease-out,
     border-color 180ms ease,
     background 180ms ease;
   will-change: transform;
 }
 
+.post-card.is-near,
 .post-card:hover,
 .post-card:focus-within {
   border-color: color-mix(in srgb, var(--accent) 46%, var(--line));
   background:
     radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent-soft) 68%, transparent), transparent 42%),
     var(--surface);
-  box-shadow: 0 26px 62px rgba(42, 78, 101, 0.16);
-  transform: translateY(-5px) scale(1.018);
+  box-shadow: 0 28px 68px rgba(42, 78, 101, var(--card-shadow-alpha));
+}
+
+.post-card:hover,
+.post-card:focus-within {
+  --card-lift: -8px;
+  --card-scale: 1.028;
+  --card-shadow-alpha: 0.2;
 }
 
 .post-card h3 {

@@ -608,6 +608,39 @@ document.addEventListener("click", (event) => {
   }
 });
 
+document.addEventListener("pointermove", (event) => {
+  if (event.pointerType === "touch") return;
+  document.querySelectorAll(".post-card").forEach((card) => {
+    const rect = card.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const distance = Math.hypot(event.clientX - centerX, event.clientY - centerY);
+    const influence = Math.max(0, 1 - distance / 260);
+
+    if (influence <= 0) {
+      card.classList.remove("is-near");
+      card.style.removeProperty("--card-lift");
+      card.style.removeProperty("--card-scale");
+      card.style.removeProperty("--card-shadow-alpha");
+      return;
+    }
+
+    card.classList.add("is-near");
+    card.style.setProperty("--card-lift", `${(-3 - influence * 8).toFixed(2)}px`);
+    card.style.setProperty("--card-scale", (1 + influence * 0.035).toFixed(3));
+    card.style.setProperty("--card-shadow-alpha", (0.1 + influence * 0.14).toFixed(3));
+  });
+});
+
+document.addEventListener("pointerleave", () => {
+  document.querySelectorAll(".post-card.is-near").forEach((card) => {
+    card.classList.remove("is-near");
+    card.style.removeProperty("--card-lift");
+    card.style.removeProperty("--card-scale");
+    card.style.removeProperty("--card-shadow-alpha");
+  });
+});
+
 window.addEventListener("hashchange", () => setRoute(location.hash.replace("#", "")));
 
 els.search.addEventListener("input", () => {
