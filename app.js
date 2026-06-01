@@ -413,6 +413,7 @@ function renderPostPage(id, type = "post") {
     return;
   }
   document.title = `${post.title} | Woman's World`;
+  els.readerLayout?.classList.add("hide-left", "hide-right");
 
   const pdf = post.pdf
     ? `<p class="pdf-link"><strong>PDF：</strong><a href="${escapeHtml(post.pdf)}" target="_blank" rel="noreferrer">${escapeHtml(post.pdfTitle || "查看 PDF")}</a></p>`
@@ -628,6 +629,7 @@ function renderAll() {
 function setRoute(rawRoute) {
   const [route, id] = (rawRoute || "home").split("/");
   const view = route === "diary" && id ? "post" : routeMap[route] ? route : "home";
+  els.body.dataset.route = view;
 
   Object.entries(routeMap).forEach(([key, element]) => {
     element.classList.toggle("active", key === view);
