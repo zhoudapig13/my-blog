@@ -736,6 +736,21 @@ body[data-theme="garden"] .theme-strip h1 {
   background: color-mix(in srgb, var(--surface) 72%, transparent);
 }
 
+.search-summary {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--accent-soft) 36%, transparent);
+  font-weight: 700;
+}
+
+.comments-panel {
+  margin-top: 42px;
+  border-top: 1px solid var(--line);
+  padding-top: 24px;
+}
+
 @media (max-width: 920px) {
   .topbar {
     grid-template-columns: 1fr;

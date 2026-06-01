@@ -15,8 +15,7 @@ const routeMap = {
   blog: document.querySelector("#blogView"),
   post: document.querySelector("#postView"),
   resources: document.querySelector("#resourcesView"),
-  plan: document.querySelector("#planView"),
-  studio: document.querySelector("#studioView")
+  plan: document.querySelector("#planView")
 };
 
 const els = {
@@ -206,23 +205,62 @@ function getSearchTerm() {
 
 function getFilteredPosts() {
   const term = getSearchTerm();
-  return [...state.posts]
-    .sort((a, b) => b.date.localeCompare(a.date))
-    .filter((post) => {
-      const haystack = [
-        post.title,
-        post.category,
-        post.tags.join(" "),
-        post.content,
-        post.pdf
-      ].join(" ").toLowerCase();
-      const matchesSearch = !term || haystack.includes(term);
-      const matchesFilter =
-        activeFilter === FILTER_ALL ||
-        post.category === activeFilter ||
-        post.tags.includes(activeFilter);
-      return matchesSearch && matchesFilter;
-    });
+  const scopedPosts = [...state.posts].filter((post) => {
+    return activeFilter === FILTER_ALL || post.category === activeFilter || post.tags.includes(activeFilter);
+  });
+
+  if (!term) {
+    return scopedPosts.sort((a, b) => b.date.localeCompare(a.date));
+  }
+
+  const scoredPosts = scopedPosts
+    .map((post) => ({ post, score: scorePost(post, term) }))
+    .filter((item) => item.score > 0);
+  const exactMatches = scoredPosts.filter((item) => item.score >= 100);
+  const results = exactMatches.length ? exactMatches : scoredPosts;
+
+  return results
+    .sort((a, b) => b.score - a.score || b.post.date.localeCompare(a.post.date))
+    .map((item) => item.post);
+}
+
+function scorePost(post, rawTerm) {
+  const term = normalizeText(rawTerm);
+  const title = normalizeText(post.title);
+  const category = normalizeText(post.category);
+  const tags = normalizeText(post.tags.join(" "));
+  const content = normalizeText(`${post.excerpt || ""} ${post.content || ""} ${post.pdf || ""}`);
+  const haystack = `${title} ${category} ${tags} ${content}`;
+
+  let score = 0;
+  if (title.includes(term)) score += 320;
+  if (tags.includes(term)) score += 240;
+  if (category.includes(term)) score += 180;
+  if (content.includes(term)) score += 110;
+  if (score > 0) return score;
+
+  return Math.round(Math.max(similarity(term, title) * 95, similarity(term, tags) * 80, similarity(term, haystack) * 70));
+}
+
+function normalizeText(value) {
+  return String(value || "").toLowerCase().replace(/\s+/g, "");
+}
+
+function similarity(query, text) {
+  if (!query || !text) return 0;
+  const queryChars = [...new Set(query)];
+  const textSet = new Set(text);
+  const overlap = queryChars.filter((char) => textSet.has(char)).length / queryChars.length;
+  let ordered = 0;
+  let start = 0;
+  for (const char of query) {
+    const index = text.indexOf(char, start);
+    if (index >= 0) {
+      ordered += 1;
+      start = index + 1;
+    }
+  }
+  return overlap * 0.7 + (ordered / query.length) * 0.3;
 }
 
 function renderProfile() {
@@ -277,6 +315,7 @@ function createPostCard(post) {
 
 function renderPosts() {
   const posts = getFilteredPosts();
+  const term = getSearchTerm();
   els.recentPosts.innerHTML = "";
   state.posts.slice(0, 4).forEach((post) => els.recentPosts.append(createPostCard(post)));
 
@@ -286,6 +325,9 @@ function renderPosts() {
     return;
   }
 
+  if (term) {
+    els.postList.innerHTML = `<div class="search-summary">搜索 “${escapeHtml(els.search.value.trim())}” ，按匹配度排序，共 ${posts.length} 篇。</div>`;
+  }
   posts.forEach((post) => els.postList.append(createPostCard(post)));
 }
 
@@ -299,6 +341,7 @@ function renderPostPage(id) {
     els.postReader.innerHTML = '<div class="empty-state">没有找到这篇文章。<a href="#blog">返回博客列表</a></div>';
     return;
   }
+  document.title = `${post.title} | Woman's World`;
 
   const pdf = post.pdf
     ? `<p><strong>PDF：</strong><a href="${escapeHtml(post.pdf)}" target="_blank" rel="noreferrer">${escapeHtml(post.pdf)}</a></p>`
@@ -309,8 +352,38 @@ function renderPostPage(id) {
     <p class="eyebrow">${escapeHtml(post.category || "未分类")} / ${escapeHtml(post.date)}</p>
     ${pdf}
     ${markdownToHtml(post.content)}
+    <section class="comments-panel">
+      <div class="section-heading">
+        <h2>评论</h2>
+        <span>GitHub 登录</span>
+      </div>
+      <div id="commentsMount"></div>
+    </section>
   `;
   typesetMath(els.postReader);
+  renderComments(post);
+}
+
+function renderComments(post) {
+  const config = window.BLOG_COMMENTS || {};
+  const mount = document.querySelector("#commentsMount");
+  if (!mount || !config.enabled) return;
+  mount.innerHTML = "";
+
+  if (config.provider === "utterances") {
+    const script = document.createElement("script");
+    script.src = "https://utteranc.es/client.js";
+    script.setAttribute("repo", config.repo);
+    script.setAttribute("issue-term", `${config.issueTermPrefix || "post"}:${post.id}`);
+    script.setAttribute("label", config.label || "comment");
+    script.setAttribute("theme", config.theme || "github-light");
+    script.setAttribute("crossorigin", "anonymous");
+    script.async = true;
+    mount.append(script);
+    return;
+  }
+
+  mount.innerHTML = '<div class="empty-state">评论系统尚未配置。</div>';
 }
 
 function renderResources() {
@@ -399,6 +472,8 @@ function setRoute(rawRoute) {
   if (view === "post") {
     renderPostPage(id);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  } else {
+    document.title = "Woman's World";
   }
 }
 
@@ -448,6 +523,15 @@ window.addEventListener("hashchange", () => setRoute(location.hash.replace("#", 
 els.search.addEventListener("input", () => {
   renderPosts();
   renderResources();
+});
+
+els.search.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+  activeFilter = FILTER_ALL;
+  location.hash = "blog";
+  renderTaxonomy();
+  renderPosts();
 });
 
 els.markdownFile.addEventListener("change", async (event) => {

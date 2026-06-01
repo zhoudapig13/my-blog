@@ -63,4 +63,20 @@ PDF 或其他文件可以放在 `resources/` 目录中，然后在文章或资�
 resources/example.pdf
 ```
 
+头像图片可以放在 `resources/uploads/`，然后在 `data/profile.json` 中填写：
+
+```json
+"photo": "resources/uploads/avatar.png"
+```
+
+## 评论
+
+文章页使用 Utterances 接入 GitHub Issues 评论。首次启用需要安装 Utterances GitHub App：
+
+```text
+https://github.com/apps/utterances
+```
+
+安装时选择 `zhoudapig13/my-blog` 仓库。访客可用 GitHub 登录评论，仓库 owner 可以在对应 issue 中删除评论。
+
 当前版本不使用浏览器 LocalStorage 保存博客内容。内容更新应进入 GitHub 仓库，再由构建脚本生成 `data/site.json`。
