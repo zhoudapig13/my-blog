@@ -1,0 +1,16 @@
+{
+  "items": [
+    {
+      "title": "TabPFN 阅读清单",
+      "type": "PDF",
+      "url": "resources/tabpfn-reading-list.pdf",
+      "description": "示例 PDF 链接。可以替换为真实文件路径或在线链接。"
+    },
+    {
+      "title": "项目代码仓库",
+      "type": "代码",
+      "url": "https://github.com/",
+      "description": "放置项目、复现实验或工具库地址。"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+backend:
+  name: github
+  repo: zhoudapig13/my-blog
+  branch: main
+
+local_backend: true
+
+media_folder: "resources/uploads"
+public_folder: "resources/uploads"
+
+locale: "zh_Hans"
+
+collections:
+  - name: "posts"
+    label: "博客文章"
+    folder: "content/posts"
+    create: true
+    slug: "{{slug}}"
+    extension: "md"
+    format: "frontmatter"
+    fields:
+      - { label: "标题", name: "title", widget: "string" }
+      - { label: "分类", name: "category", widget: "string", default: "未分类" }
+      - { label: "标签", name: "tags", widget: "list", required: false }
+      - { label: "日期", name: "date", widget: "datetime", format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: "PDF 链接", name: "pdf", widget: "string", required: false }
+      - { label: "正文", name: "body", widget: "markdown" }
+
+  - name: "site_data"
+    label: "站点数据"
+    files:
+      - name: "profile"
+        label: "个人介绍"
+        file: "data/profile.json"
+        fields:
+          - { label: "名字", name: "name", widget: "string" }
+          - { label: "简介", name: "bio", widget: "text" }
+          - { label: "照片", name: "photo", widget: "image", required: false }
+
+      - name: "resources"
+        label: "资源"
+        file: "data/resources.json"
+        fields:
+          - label: "资源列表"
+            name: "items"
+            widget: "list"
+            fields:
+              - { label: "资源名称", name: "title", widget: "string" }
+              - { label: "类型", name: "type", widget: "select", options: ["PDF", "数据集", "代码", "链接", "其他"] }
+              - { label: "链接或路径", name: "url", widget: "string", required: false }
+              - { label: "说明", name: "description", widget: "text", required: false }
+
+      - name: "plans"
+        label: "计划"
+        file: "data/plans.json"
+        fields:
+          - label: "计划列表"
+            name: "items"
+            widget: "list"
+            fields:
+              - { label: "目标", name: "goal", widget: "string" }
+              - { label: "状态", name: "status", widget: "select", options: [{ label: "未开始", value: "todo" }, { label: "进行中", value: "doing" }, { label: "已完成", value: "done" }] }

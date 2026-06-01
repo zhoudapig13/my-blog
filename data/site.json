@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-06-01T09:06:16.923Z",
+  "profile": {
+    "name": "你的名字",
+    "bio": "这里可以放你的研究方向、写作主题、项目经历和联系方式。博客支持 Markdown 文章、资源文件、PDF 链接和计划进度管理。",
+    "photo": ""
+  },
+  "resources": [
+    {
+      "title": "TabPFN 阅读清单",
+      "type": "PDF",
+      "url": "resources/tabpfn-reading-list.pdf",
+      "description": "示例 PDF 链接。可以替换为真实文件路径或在线链接。"
+    },
+    {
+      "title": "项目代码仓库",
+      "type": "代码",
+      "url": "https://github.com/",
+      "description": "放置项目、复现实验或工具库地址。"
+    }
+  ],
+  "plans": [
+    {
+      "goal": "完成个人介绍与头像",
+      "status": "doing"
+    },
+    {
+      "goal": "整理第一批 Markdown 文章",
+      "status": "doing"
+    },
+    {
+      "goal": "补充 PDF 与资源链接",
+      "status": "todo"
+    },
+    {
+      "goal": "选择最终浅色视觉方案并部署",
+      "status": "todo"
+    }
+  ],
+  "posts": [
+    {
+      "id": "tabpfn-note",
+      "title": "TabPFN 想法笔记：从快速预测到研究工作流",
+      "category": "研究笔记",
+      "tags": [
+        "TabPFN",
+        "机器学习",
+        "论文"
+      ],
+      "date": "2026-06-01",
+      "pdf": "resources/tabpfn-reading-list.pdf",
+      "content": "# TabPFN 想法笔记：从快速预测到研究工作流\n\n这篇示例文章展示 Markdown 渲染效果。你可以在 GitHub CMS 上传或编辑 `.md` 文件，也可以在写作台先做本地预览。\n\n## 为什么适合博客\n\n- 文章可以按分类和标签组织。\n- PDF 链接会出现在文章页顶部。\n- 搜索会匹配标题、摘要、标签和正文。\n\n> 后续可以把这个静态版本发布到 GitHub Pages，所有内容跟随仓库版本历史。\n\n代码块示例：\n\n```js\nconst idea = \"用小而稳的实验记录，减少研究中的上下文切换\";\nconsole.log(idea);\n```\n\n[查看示例 PDF](resources/tabpfn-reading-list.pdf)",
+      "excerpt": "TabPFN 想法笔记：从快速预测到研究工作流 这篇示例文章展示 Markdown 渲染效果。你可以在 GitHub CMS 上传或编辑 .md 文件，也可以在写作台先做本地预览。 为什么适合博客 文章可以按分类和标签组织。 PDF 链接会出现在文章页顶部。 搜索会匹配标题、摘要..."
+    },
+    {
+      "id": "markdown-workflow",
+      "title": "Markdown 写作流：文章、资源和计划如何联动",
+      "category": "写作方法",
+      "tags": [
+        "Markdown",
+        "博客",
+        "效率"
+      ],
+      "date": "2026-05-28",
+      "pdf": "",
+      "content": "# Markdown 写作流：文章、资源和计划如何联动\n\n一个轻量博客最重要的不是复杂，而是让内容稳定生长。\n\n## 建议结构\n\n1. 文章负责记录完整思考。\n2. 资源页保存 PDF、数据集、代码仓库和外部链接。\n3. 计划页记录目标、进度和下一步。\n\n当一篇文章引用资料时，可以直接插入链接，例如 [项目资源](#resources)。",
+      "excerpt": "Markdown 写作流：文章、资源和计划如何联动 一个轻量博客最重要的不是复杂，而是让内容稳定生长。 建议结构 1. 文章负责记录完整思考。 2. 资源页保存 PDF、数据集、代码仓库和外部链接。 3. 计划页记录目标、进度和下一步。 当一篇文章引用资料时，可以直接插入链接，例..."
+    },
+    {
+      "id": "resource-hub",
+      "title": "资源库设计：让文件和链接不再散落",
+      "category": "资源整理",
+      "tags": [
+        "PDF",
+        "文件",
+        "知识库"
+      ],
+      "date": "2026-05-20",
+      "pdf": "resources/example.pdf",
+      "content": "# 资源库设计：让文件和链接不再散落\n\n资源页可以放 PDF、代码、数据集和网页链接。当前版本以 GitHub 仓库文件作为数据源，适合部署到 GitHub Pages。\n\n## 下一步\n\n如果要长期维护，建议把文章放进 `content/posts`，资源放进 `resources`，再让 GitHub Actions 自动生成站点数据。",
+      "excerpt": "资源库设计：让文件和链接不再散落 资源页可以放 PDF、代码、数据集和网页链接。当前版本以 GitHub 仓库文件作为数据源，适合部署到 GitHub Pages。 下一步 如果要长期维护，建议把文章放进 content/posts，资源放进 resources，再让 GitHu..."
+    }
+  ]
+}

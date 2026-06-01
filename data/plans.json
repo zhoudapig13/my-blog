@@ -1,0 +1,20 @@
+{
+  "items": [
+    {
+      "goal": "完成个人介绍与头像",
+      "status": "doing"
+    },
+    {
+      "goal": "整理第一批 Markdown 文章",
+      "status": "doing"
+    },
+    {
+      "goal": "补充 PDF 与资源链接",
+      "status": "todo"
+    },
+    {
+      "goal": "选择最终浅色视觉方案并部署",
+      "status": "todo"
+    }
+  ]
+}

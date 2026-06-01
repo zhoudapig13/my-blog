@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>个人博客</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body data-theme="journal">
+    <header class="topbar">
+      <a class="brand" href="#home" aria-label="返回首页">
+        <span class="brand-mark"></span>
+        <span>个人博客</span>
+      </a>
+      <nav class="nav" aria-label="主导航">
+        <a href="#home" data-route="home">首页</a>
+        <a href="#blog" data-route="blog">博客</a>
+        <a href="#resources" data-route="resources">资源</a>
+        <a href="#plan" data-route="plan">计划</a>
+        <a href="#studio" data-route="studio">写作台</a>
+      </nav>
+      <label class="search">
+        <span class="search-icon"></span>
+        <input id="searchInput" type="search" placeholder="搜索文章、标签、PDF" />
+      </label>
+    </header>
+
+    <main>
+      <section class="theme-strip" aria-label="样式方案">
+        <div>
+          <p class="eyebrow">浅色样式预览</p>
+          <h1>选择一个适合长期写作的博客气质</h1>
+        </div>
+        <div class="theme-actions" role="group" aria-label="切换样式">
+          <button class="theme-button" data-theme-choice="atelier">方案 A</button>
+          <button class="theme-button active" data-theme-choice="journal">方案 B</button>
+          <button class="theme-button" data-theme-choice="garden">方案 C</button>
+        </div>
+      </section>
+
+      <section id="homeView" class="view active">
+        <div class="home-grid">
+          <aside class="left-rail">
+            <section class="profile-panel">
+              <div class="photo-slot">
+                <img id="profileImage" alt="个人照片预览" />
+                <div class="photo-fallback">
+                  <span>照片栏</span>
+                  <small>在写作台上传头像</small>
+                </div>
+              </div>
+              <div>
+                <p class="eyebrow">关于我</p>
+                <h2 id="profileName">你的名字</h2>
+                <p id="profileBio">
+                  这里可以放你的研究方向、写作主题、项目经历和联系方式。博客目前支持 Markdown 文章、资源文件和计划进度管理。
+                </p>
+              </div>
+            </section>
+
+            <section class="taxonomy-panel">
+              <div class="section-heading">
+                <h2>分类目录</h2>
+                <span id="categoryCount">0</span>
+              </div>
+              <div id="categoryList" class="taxonomy-list"></div>
+              <div class="section-heading compact">
+                <h2>标签</h2>
+                <span id="tagCount">0</span>
+              </div>
+              <div id="tagList" class="tag-list"></div>
+            </section>
+          </aside>
+
+          <section class="recent-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">近期文章</p>
+                <h2>最新发布</h2>
+              </div>
+              <a class="text-link" href="#blog">查看全部</a>
+            </div>
+            <div id="recentPosts" class="post-grid"></div>
+          </section>
+        </div>
+      </section>
+
+      <section id="blogView" class="view">
+        <div class="content-layout">
+          <aside class="filter-panel">
+            <p class="eyebrow">博客</p>
+            <h2>文章筛选</h2>
+            <div id="blogFilters" class="filter-list"></div>
+          </aside>
+          <section>
+            <div id="postList" class="post-list"></div>
+            <article id="postReader" class="reader hidden"></article>
+          </section>
+        </div>
+      </section>
+
+      <section id="resourcesView" class="view">
+        <div class="page-head">
+          <p class="eyebrow">资源</p>
+          <h2>文件、PDF 与外部链接</h2>
+        </div>
+        <div class="resources-layout">
+          <section class="editor-panel">
+            <h3>GitHub 管理</h3>
+            <p>
+              资源数据来自 <code>data/resources.json</code>。正式发布后，可以进入可视化后台添加 PDF、文件路径和外部链接，提交会写回 GitHub 仓库。
+            </p>
+            <a class="button-link" href="admin/" target="_blank" rel="noreferrer">打开内容后台</a>
+          </section>
+          <div id="resourceList" class="resource-list"></div>
+        </div>
+      </section>
+
+      <section id="planView" class="view">
+        <div class="page-head">
+          <p class="eyebrow">计划</p>
+          <h2>目标、进度与下一步</h2>
+        </div>
+        <div class="plan-grid">
+          <section class="progress-panel">
+            <div class="progress-ring" aria-label="完成进度">
+              <span id="progressValue">0%</span>
+            </div>
+            <div>
+              <h3>总体完成度</h3>
+              <p>根据计划条目的状态自动计算。计划数据由 GitHub 仓库中的 JSON 文件驱动。</p>
+            </div>
+          </section>
+          <section class="editor-panel">
+            <h3>计划数据</h3>
+            <p>
+              计划来自 <code>data/plans.json</code>。在后台编辑状态后，GitHub Actions 会重新生成进度。
+            </p>
+            <a class="button-link" href="admin/" target="_blank" rel="noreferrer">编辑计划</a>
+          </section>
+          <div id="planList" class="plan-list"></div>
+        </div>
+      </section>
+
+      <section id="studioView" class="view">
+        <div class="page-head">
+          <p class="eyebrow">写作台</p>
+          <h2>GitHub 内容管理与 Markdown 预览</h2>
+        </div>
+        <div class="studio-grid">
+          <section class="editor-panel">
+            <h3>可视化后台</h3>
+            <p>
+              文章、个人介绍、资源和计划都存放在 GitHub 仓库文件中。进入后台后，每次保存都会形成一次 Git 提交。
+            </p>
+            <a class="button-link" href="admin/" target="_blank" rel="noreferrer">打开 GitHub CMS</a>
+          </section>
+
+          <form id="postForm" class="editor-panel">
+            <h3>Markdown 草稿预览</h3>
+            <label>
+              标题
+              <input name="title" required placeholder="文章标题" />
+            </label>
+            <label>
+              分类
+              <input name="category" placeholder="例如：研究笔记" />
+            </label>
+            <label>
+              标签
+              <input name="tags" placeholder="用逗号分隔，例如：TabPFN, Markdown" />
+            </label>
+            <label>
+              PDF 链接
+              <input name="pdf" placeholder="https://.../paper.pdf 或 resources/paper.pdf" />
+            </label>
+            <label class="file-drop">
+              导入 Markdown 文件
+              <input id="markdownFile" type="file" accept=".md,text/markdown,text/plain" />
+            </label>
+            <label>
+              Markdown 内容
+              <textarea name="content" rows="12" placeholder="# 标题&#10;&#10;正文支持 Markdown、链接和代码块"></textarea>
+            </label>
+            <div class="button-row">
+              <button type="submit">下载 Markdown</button>
+              <button id="downloadDraft" type="button" class="secondary-button">生成草稿文件</button>
+            </div>
+          </form>
+
+          <section class="preview-panel">
+            <div class="section-heading">
+              <h3>实时预览</h3>
+              <span>Markdown</span>
+            </div>
+            <article id="livePreview" class="reader"></article>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <template id="postCardTemplate">
+      <article class="post-card">
+        <div class="post-meta"></div>
+        <h3></h3>
+        <p></p>
+        <div class="post-tags"></div>
+        <button type="button">阅读</button>
+      </article>
+    </template>
+
+    <script src="app.js"></script>
+  </body>
+</html>
