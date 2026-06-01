@@ -1,3 +1,13 @@
+---
+title: "TabICL学习笔记"
+category: "tabular data"
+tags:
+  - "机器学习"
+  - "transformer"
+  - "通用模型"
+date: "2026-06-01"
+pdf: ""
+---
 ## 2. 相关工作
 
 ### 2.1 基础模型与上下文学习
