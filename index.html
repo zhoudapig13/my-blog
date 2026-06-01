@@ -25,6 +25,7 @@
       <nav class="nav" aria-label="主导航">
         <a href="#home" data-route="home">首页</a>
         <a href="#blog" data-route="blog">博客</a>
+        <a href="#diary" data-route="diary">日记</a>
         <a href="#resources" data-route="resources">资源</a>
         <a href="#plan" data-route="plan">计划</a>
       </nav>
@@ -105,8 +106,30 @@
         </div>
       </section>
 
+      <section id="diaryView" class="view">
+        <div class="content-layout">
+          <aside class="filter-panel">
+            <p class="eyebrow">日记</p>
+            <h2>日记目录</h2>
+            <p class="muted-note">这里放更轻盈的 Markdown 记录，不加入首页近期文章。</p>
+          </aside>
+          <section>
+            <div id="diaryList" class="post-list"></div>
+          </section>
+        </div>
+      </section>
+
       <section id="postView" class="view">
-        <article id="postReader" class="reader post-page"></article>
+        <div class="reader-layout" id="readerLayout">
+          <aside class="reader-sidebar">
+            <div class="section-heading">
+              <h2>同目录</h2>
+              <button id="readerToggle" class="icon-button" type="button" aria-label="隐藏目录">隐藏</button>
+            </div>
+            <div id="relatedPosts" class="reader-nav-list"></div>
+          </aside>
+          <article id="postReader" class="reader post-page"></article>
+        </div>
       </section>
 
       <section id="resourcesView" class="view">
@@ -114,14 +137,7 @@
           <p class="eyebrow">资源</p>
           <h2>文件、PDF 与外部链接</h2>
         </div>
-        <div class="resources-layout">
-          <section class="editor-panel">
-            <h3>GitHub 管理</h3>
-            <p>
-              资源数据来自 <code>data/resources.json</code>。正式发布后，可以进入可视化后台添加 PDF、文件路径和外部链接，提交会写回 GitHub 仓库。
-            </p>
-            <a class="button-link" href="admin/" target="_blank" rel="noreferrer">打开内容后台</a>
-          </section>
+        <div class="resources-layout single-column">
           <div id="resourceList" class="resource-list"></div>
         </div>
       </section>

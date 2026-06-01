@@ -3,6 +3,7 @@ const path = require("node:path");
 
 const root = path.resolve(__dirname, "..");
 const postsDir = path.join(root, "content", "posts");
+const diaryDir = path.join(root, "content", "diary");
 const dataDir = path.join(root, "data");
 const outputPath = path.join(dataDir, "site.json");
 
@@ -62,18 +63,18 @@ function excerpt(content, length = 140) {
   return plain.length > length ? `${plain.slice(0, length)}...` : plain;
 }
 
-function loadPosts() {
-  if (!fs.existsSync(postsDir)) return [];
+function loadMarkdownCollection(collectionDir) {
+  if (!fs.existsSync(collectionDir)) return [];
   return fs
-    .readdirSync(postsDir)
+    .readdirSync(collectionDir)
     .filter((file) => file.endsWith(".md"))
     .map((file) => {
-      const source = fs.readFileSync(path.join(postsDir, file), "utf8");
+      const source = fs.readFileSync(path.join(collectionDir, file), "utf8");
       const { meta, content } = parseFrontmatter(source, file);
       return {
         id: file.replace(/\.md$/i, ""),
         title: meta.title || file.replace(/\.md$/i, ""),
-        category: meta.category || "未分类",
+        category: Array.isArray(meta.category) ? meta.category[0] || "未分类" : meta.category || "未分类",
         tags: Array.isArray(meta.tags) ? meta.tags : [],
         date: meta.date || new Date().toISOString().slice(0, 10),
         pdf: meta.pdf || "",
@@ -88,9 +89,12 @@ const siteData = {
   profile: readJson("data/profile.json", {}),
   resources: readJson("data/resources.json", { items: [] }).items || [],
   plans: readJson("data/plans.json", { items: [] }).items || [],
-  posts: loadPosts()
+  posts: loadMarkdownCollection(postsDir),
+  diary: loadMarkdownCollection(diaryDir)
 };
 
 fs.mkdirSync(dataDir, { recursive: true });
 fs.writeFileSync(outputPath, `${JSON.stringify(siteData, null, 2)}\n`);
-console.log(`Generated ${path.relative(root, outputPath)} with ${siteData.posts.length} posts.`);
+console.log(
+  `Generated ${path.relative(root, outputPath)} with ${siteData.posts.length} posts and ${siteData.diary.length} diary entries.`
+);

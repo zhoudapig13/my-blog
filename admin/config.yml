@@ -26,6 +26,21 @@ collections:
       - { label: "PDF 链接", name: "pdf", widget: "string", required: false }
       - { label: "正文", name: "body", widget: "markdown" }
 
+  - name: "diary"
+    label: "日记"
+    folder: "content/diary"
+    create: true
+    slug: "{{slug}}"
+    extension: "md"
+    format: "frontmatter"
+    fields:
+      - { label: "标题", name: "title", widget: "string" }
+      - { label: "分类", name: "category", widget: "string", default: "日常" }
+      - { label: "标签", name: "tags", widget: "list", required: false }
+      - { label: "日期", name: "date", widget: "datetime", format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: "PDF 链接", name: "pdf", widget: "string", required: false }
+      - { label: "正文", name: "body", widget: "markdown" }
+
   - name: "site_data"
     label: "站点数据"
     files:

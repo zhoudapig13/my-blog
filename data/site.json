@@ -58,8 +58,8 @@
       ],
       "date": "2026-06-01",
       "pdf": "resources/tabpfn-reading-list.pdf",
-      "content": "# TabPFN 想法笔记：从快速预测到研究工作流\n\n这篇示例文章展示 Markdown 渲染效果。你可以在 GitHub CMS 上传或编辑 `.md` 文件，也可以在写作台先做本地预览。\n\n## 为什么适合博客\n\n- 文章可以按分类和标签组织。\n- PDF 链接会出现在文章页顶部。\n- 搜索会匹配标题、摘要、标签和正文。\n\n> 后续可以把这个静态版本发布到 GitHub Pages，所有内容跟随仓库版本历史。\n\n代码块示例：\n\n```js\nconst idea = \"用小而稳的实验记录，减少研究中的上下文切换\";\nconsole.log(idea);\n```\n\n[查看示例 PDF](resources/tabpfn-reading-list.pdf)",
-      "excerpt": "TabPFN 想法笔记：从快速预测到研究工作流 这篇示例文章展示 Markdown 渲染效果。你可以在 GitHub CMS 上传或编辑 .md 文件，也可以在写作台先做本地预览。 为什么适合博客 文章可以按分类和标签组织。 PDF 链接会出现在文章页顶部。 搜索会匹配标题、摘要..."
+      "content": "# TabPFN 想法笔记：从快速预测到研究工作流\n\n这篇示例文章展示 Markdown 渲染效果。你可以在 GitHub 上传或编辑 `.md` 文件，并通过 GitHub Actions 自动发布。\n\n## 为什么适合博客\n\n- 文章可以按分类和标签组织。\n- PDF 链接会出现在文章页顶部。\n- 搜索会匹配标题、摘要、标签和正文。\n\n> 后续可以把这个静态版本发布到 GitHub Pages，所有内容跟随仓库版本历史。\n\n代码块示例：\n\n```js\nconst idea = \"用小而稳的实验记录，减少研究中的上下文切换\";\nconsole.log(idea);\n```\n\n[查看示例 PDF](resources/tabpfn-reading-list.pdf)",
+      "excerpt": "TabPFN 想法笔记：从快速预测到研究工作流 这篇示例文章展示 Markdown 渲染效果。你可以在 GitHub 上传或编辑 .md 文件，并通过 GitHub Actions 自动发布。 为什么适合博客 文章可以按分类和标签组织。 PDF 链接会出现在文章页顶部。 搜索会匹..."
     },
     {
       "id": "markdown-workflow",
@@ -88,6 +88,20 @@
       "pdf": "resources/example.pdf",
       "content": "# 资源库设计：让文件和链接不再散落\n\n资源页可以放 PDF、代码、数据集和网页链接。当前版本以 GitHub 仓库文件作为数据源，适合部署到 GitHub Pages。\n\n## 下一步\n\n如果要长期维护，建议把文章放进 `content/posts`，资源放进 `resources`，再让 GitHub Actions 自动生成站点数据。",
       "excerpt": "资源库设计：让文件和链接不再散落 资源页可以放 PDF、代码、数据集和网页链接。当前版本以 GitHub 仓库文件作为数据源，适合部署到 GitHub Pages。 下一步 如果要长期维护，建议把文章放进 content/posts，资源放进 resources，再让 GitHu..."
+    }
+  ],
+  "diary": [
+    {
+      "id": "first-diary",
+      "title": "第一篇日记",
+      "category": "日常",
+      "tags": [
+        "记录"
+      ],
+      "date": "2026-06-01",
+      "pdf": "",
+      "content": "# 第一篇日记\n\n这里可以写更轻松、更私人的内容。日记同样使用 Markdown，但不会出现在首页近期文章里。",
+      "excerpt": "第一篇日记 这里可以写更轻松、更私人的内容。日记同样使用 Markdown，但不会出现在首页近期文章里。"
     }
   ]
 }

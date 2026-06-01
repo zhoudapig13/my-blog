@@ -11,7 +11,7 @@ pdf: "resources/tabpfn-reading-list.pdf"
 
 # TabPFN 想法笔记：从快速预测到研究工作流
 
-这篇示例文章展示 Markdown 渲染效果。你可以在 GitHub CMS 上传或编辑 `.md` 文件，也可以在写作台先做本地预览。
+这篇示例文章展示 Markdown 渲染效果。你可以在 GitHub 上传或编辑 `.md` 文件，并通过 GitHub Actions 自动发布。
 
 ## 为什么适合博客
 

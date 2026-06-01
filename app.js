@@ -2,6 +2,7 @@ let state = {
   theme: "journal",
   profile: {},
   posts: [],
+  diary: [],
   resources: [],
   plans: []
 };
@@ -13,6 +14,7 @@ let activeFilter = FILTER_ALL;
 const routeMap = {
   home: document.querySelector("#homeView"),
   blog: document.querySelector("#blogView"),
+  diary: document.querySelector("#diaryView"),
   post: document.querySelector("#postView"),
   resources: document.querySelector("#resourcesView"),
   plan: document.querySelector("#planView")
@@ -26,7 +28,11 @@ const els = {
   profileBio: document.querySelector("#profileBio"),
   recentPosts: document.querySelector("#recentPosts"),
   postList: document.querySelector("#postList"),
+  diaryList: document.querySelector("#diaryList"),
   postReader: document.querySelector("#postReader"),
+  relatedPosts: document.querySelector("#relatedPosts"),
+  readerLayout: document.querySelector("#readerLayout"),
+  readerToggle: document.querySelector("#readerToggle"),
   categoryList: document.querySelector("#categoryList"),
   tagList: document.querySelector("#tagList"),
   categoryCount: document.querySelector("#categoryCount"),
@@ -203,10 +209,10 @@ function getSearchTerm() {
   return els.search.value.trim().toLowerCase();
 }
 
-function getFilteredPosts() {
+function getFilteredPosts(collection = state.posts, useFilter = true) {
   const term = getSearchTerm();
-  const scopedPosts = [...state.posts].filter((post) => {
-    return activeFilter === FILTER_ALL || post.category === activeFilter || post.tags.includes(activeFilter);
+  const scopedPosts = [...collection].filter((post) => {
+    return !useFilter || activeFilter === FILTER_ALL || post.category === activeFilter || post.tags.includes(activeFilter);
   });
 
   if (!term) {
@@ -299,7 +305,7 @@ function renderTaxonomy() {
     .join("");
 }
 
-function createPostCard(post) {
+function createPostCard(post, type = "post") {
   const template = document.querySelector("#postCardTemplate").content.cloneNode(true);
   const card = template.querySelector(".post-card");
   card.querySelector(".post-meta").textContent = `${post.date} / ${post.category || "未分类"}`;
@@ -308,8 +314,8 @@ function createPostCard(post) {
   card.querySelector(".post-tags").innerHTML = post.tags
     .map((tag) => `<a href="#blog" data-filter="${escapeHtml(tag)}">${escapeHtml(tag)}</a>`)
     .join("");
-  card.querySelector("button").addEventListener("click", () => openPost(post.id));
-  card.querySelector("h3").addEventListener("click", () => openPost(post.id));
+  card.querySelector("button").addEventListener("click", () => openPost(post.id, type));
+  card.querySelector("h3").addEventListener("click", () => openPost(post.id, type));
   return card;
 }
 
@@ -331,14 +337,35 @@ function renderPosts() {
   posts.forEach((post) => els.postList.append(createPostCard(post)));
 }
 
-function openPost(id) {
-  location.hash = `post/${encodeURIComponent(id)}`;
+function renderDiary() {
+  if (!els.diaryList) return;
+  const diary = getFilteredPosts(state.diary, false);
+  els.diaryList.innerHTML = "";
+  if (!diary.length) {
+    els.diaryList.innerHTML = '<div class="empty-state">还没有日记。把 Markdown 文件放进 <code>content/diary</code> 后会显示在这里。</div>';
+    return;
+  }
+
+  diary.forEach((entry) => els.diaryList.append(createPostCard(entry, "diary")));
 }
 
-function renderPostPage(id) {
-  const post = state.posts.find((item) => item.id === decodeURIComponent(id || ""));
+function openPost(id, type = "post") {
+  location.hash = `${type}/${encodeURIComponent(id)}`;
+}
+
+function getCollection(type) {
+  return type === "diary" ? state.diary : state.posts;
+}
+
+function getListRoute(type) {
+  return type === "diary" ? "diary" : "blog";
+}
+
+function renderPostPage(id, type = "post") {
+  const collection = getCollection(type);
+  const post = collection.find((item) => item.id === decodeURIComponent(id || ""));
   if (!post) {
-    els.postReader.innerHTML = '<div class="empty-state">没有找到这篇文章。<a href="#blog">返回博客列表</a></div>';
+    els.postReader.innerHTML = `<div class="empty-state">没有找到这篇内容。<a href="#${getListRoute(type)}">返回列表</a></div>`;
     return;
   }
   document.title = `${post.title} | Woman's World`;
@@ -348,10 +375,14 @@ function renderPostPage(id) {
     : "";
 
   els.postReader.innerHTML = `
-    <a class="back-link" href="#blog">返回文章列表</a>
+    <div class="reader-actions">
+      <a class="back-link" href="#${getListRoute(type)}">返回列表</a>
+      <button id="readerToggleInline" class="secondary-button" type="button">切换目录</button>
+    </div>
     <p class="eyebrow">${escapeHtml(post.category || "未分类")} / ${escapeHtml(post.date)}</p>
     ${pdf}
     ${markdownToHtml(post.content)}
+    ${renderAdjacentPosts(collection, post, type)}
     <section class="comments-panel">
       <div class="section-heading">
         <h2>评论</h2>
@@ -360,11 +391,55 @@ function renderPostPage(id) {
       <div id="commentsMount"></div>
     </section>
   `;
+  renderRelatedPosts(collection, post, type);
   typesetMath(els.postReader);
-  renderComments(post);
+  renderComments(post, type);
 }
 
-function renderComments(post) {
+function renderRelatedPosts(collection, currentPost, type) {
+  if (!els.relatedPosts) return;
+  const related = collection
+    .filter((post) => post.category === currentPost.category && post.id !== currentPost.id)
+    .sort((a, b) => b.date.localeCompare(a.date));
+
+  els.relatedPosts.innerHTML =
+    related
+      .map(
+        (post) => `
+          <a class="reader-nav-item" href="#${type}/${encodeURIComponent(post.id)}">
+            <span>${escapeHtml(post.date)}</span>
+            <strong>${escapeHtml(post.title)}</strong>
+          </a>
+        `
+      )
+      .join("") || '<div class="empty-state compact">这个目录下暂无其他内容。</div>';
+}
+
+function renderAdjacentPosts(collection, currentPost, type) {
+  const sorted = [...collection].sort((a, b) => b.date.localeCompare(a.date));
+  const index = sorted.findIndex((post) => post.id === currentPost.id);
+  const previous = sorted[index - 1];
+  const next = sorted[index + 1];
+
+  if (!previous && !next) return "";
+
+  return `
+    <nav class="adjacent-posts" aria-label="上一篇和下一篇">
+      ${
+        previous
+          ? `<a href="#${type}/${encodeURIComponent(previous.id)}"><span>上一篇</span><strong>${escapeHtml(previous.title)}</strong></a>`
+          : "<span></span>"
+      }
+      ${
+        next
+          ? `<a href="#${type}/${encodeURIComponent(next.id)}"><span>下一篇</span><strong>${escapeHtml(next.title)}</strong></a>`
+          : "<span></span>"
+      }
+    </nav>
+  `;
+}
+
+function renderComments(post, type = "post") {
   const config = window.BLOG_COMMENTS || {};
   const mount = document.querySelector("#commentsMount");
   if (!mount || !config.enabled) return;
@@ -374,7 +449,7 @@ function renderComments(post) {
     const script = document.createElement("script");
     script.src = "https://utteranc.es/client.js";
     script.setAttribute("repo", config.repo);
-    script.setAttribute("issue-term", `${config.issueTermPrefix || "post"}:${post.id}`);
+    script.setAttribute("issue-term", `${config.issueTermPrefix || "entry"}:${type}:${post.id}`);
     script.setAttribute("label", config.label || "comment");
     script.setAttribute("theme", config.theme || "github-light");
     script.setAttribute("crossorigin", "anonymous");
@@ -454,6 +529,7 @@ function renderAll() {
   renderProfile();
   renderTaxonomy();
   renderPosts();
+  renderDiary();
   renderResources();
   renderPlans();
   renderPreview();
@@ -461,17 +537,17 @@ function renderAll() {
 
 function setRoute(rawRoute) {
   const [route, id] = (rawRoute || "home").split("/");
-  const view = routeMap[route] ? route : "home";
+  const view = route === "diary" && id ? "post" : routeMap[route] ? route : "home";
 
   Object.entries(routeMap).forEach(([key, element]) => {
     element.classList.toggle("active", key === view);
   });
   document.querySelectorAll(".nav a").forEach((link) => {
-    link.classList.toggle("active", link.dataset.route === view);
+    link.classList.toggle("active", link.dataset.route === (view === "post" ? route : view));
   });
 
   if (view === "post") {
-    renderPostPage(id);
+    renderPostPage(route === "diary" ? id : id, route === "diary" ? "diary" : "post");
     window.scrollTo({ top: 0, behavior: "smooth" });
   } else {
     document.title = "Woman's World";
@@ -504,6 +580,15 @@ function downloadText(fileName, text) {
 }
 
 document.addEventListener("click", (event) => {
+  const readerToggle = event.target.closest("#readerToggle, #readerToggleInline");
+  if (readerToggle && els.readerLayout) {
+    els.readerLayout.classList.toggle("is-expanded");
+    if (els.readerToggle) {
+      els.readerToggle.textContent = els.readerLayout.classList.contains("is-expanded") ? "显示" : "隐藏";
+    }
+    return;
+  }
+
   const themeButton = event.target.closest("[data-theme-choice]");
   if (themeButton) {
     state.theme = themeButton.dataset.themeChoice;
@@ -523,6 +608,7 @@ window.addEventListener("hashchange", () => setRoute(location.hash.replace("#", 
 
 els.search.addEventListener("input", () => {
   renderPosts();
+  renderDiary();
   renderResources();
 });
 
