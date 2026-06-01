@@ -67,6 +67,18 @@ collections:
               - { label: "链接或路径", name: "url", widget: "string", required: false }
               - { label: "说明", name: "description", widget: "text", required: false }
 
+      - name: "friends"
+        label: "友链"
+        file: "data/friends.json"
+        fields:
+          - label: "友链列表"
+            name: "items"
+            widget: "list"
+            fields:
+              - { label: "名称", name: "name", widget: "string" }
+              - { label: "链接", name: "url", widget: "string" }
+              - { label: "说明", name: "description", widget: "text", required: false }
+
       - name: "plans"
         label: "计划"
         file: "data/plans.json"

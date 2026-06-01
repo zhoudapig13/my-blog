@@ -4,6 +4,7 @@ let state = {
   posts: [],
   diary: [],
   resources: [],
+  friends: [],
   plans: []
 };
 
@@ -35,8 +36,10 @@ const els = {
   readerToggle: document.querySelector("#readerToggle"),
   categoryList: document.querySelector("#categoryList"),
   tagList: document.querySelector("#tagList"),
+  friendList: document.querySelector("#friendList"),
   categoryCount: document.querySelector("#categoryCount"),
   tagCount: document.querySelector("#tagCount"),
+  friendCount: document.querySelector("#friendCount"),
   blogFilters: document.querySelector("#blogFilters"),
   resourceList: document.querySelector("#resourceList"),
   planList: document.querySelector("#planList"),
@@ -488,6 +491,22 @@ function renderResources() {
       .join("") || '<div class="empty-state">没有匹配的资源。</div>';
 }
 
+function renderFriends() {
+  if (!els.friendList) return;
+  els.friendCount.textContent = state.friends.length;
+  els.friendList.innerHTML =
+    state.friends
+      .map(
+        (friend) => `
+          <a class="friend-link" href="${escapeHtml(friend.url)}" target="_blank" rel="noreferrer">
+            <strong>${escapeHtml(friend.name)}</strong>
+            <span>${escapeHtml(friend.description || friend.url)}</span>
+          </a>
+        `
+      )
+      .join("") || '<div class="empty-state compact">还没有友链。</div>';
+}
+
 function renderPlans() {
   const done = state.plans.filter((plan) => plan.status === "done").length;
   const progress = state.plans.length ? Math.round((done / state.plans.length) * 100) : 0;
@@ -534,6 +553,7 @@ function renderAll() {
   renderPosts();
   renderDiary();
   renderResources();
+  renderFriends();
   renderPlans();
   renderPreview();
 }

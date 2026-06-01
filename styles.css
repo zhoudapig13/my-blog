@@ -298,6 +298,7 @@ body[data-theme="garden"] .theme-strip h1 {
 
 .profile-panel,
 .taxonomy-panel,
+.friends-panel,
 .recent-panel,
 .filter-panel,
 .editor-panel,
@@ -315,6 +316,7 @@ body[data-theme="garden"] .theme-strip h1 {
 
 .profile-panel,
 .taxonomy-panel,
+.friends-panel,
 .recent-panel,
 .filter-panel,
 .editor-panel,
@@ -704,9 +706,41 @@ body[data-theme="garden"] .theme-strip h1 {
 }
 
 .resource-list,
-.plan-list {
+.plan-list,
+.friend-list {
   display: grid;
   gap: 12px;
+}
+
+.friend-link {
+  display: grid;
+  gap: 5px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--accent-soft) 45%, transparent), transparent),
+    var(--surface-strong);
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.friend-link:hover {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  box-shadow: 0 16px 34px rgba(42, 78, 101, 0.12);
+  transform: translateY(-3px);
+}
+
+.friend-link strong {
+  color: var(--ink);
+}
+
+.friend-link span {
+  color: var(--muted);
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .resource-card {

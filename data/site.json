@@ -18,6 +18,13 @@
       "description": "放置项目、复现实验或工具库地址。"
     }
   ],
+  "friends": [
+    {
+      "name": "GitHub",
+      "url": "https://github.com/zhoudapig13",
+      "description": "我的 GitHub 主页"
+    }
+  ],
   "plans": [
     {
       "goal": "完成个人介绍与头像",
