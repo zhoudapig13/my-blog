@@ -235,7 +235,7 @@ function scorePost(post, rawTerm) {
   const title = normalizeText(post.title);
   const category = normalizeText(post.category);
   const tags = normalizeText(post.tags.join(" "));
-  const content = normalizeText(`${post.excerpt || ""} ${post.content || ""} ${post.pdf || ""}`);
+      const content = normalizeText(`${post.excerpt || ""} ${post.content || ""} ${post.pdf || ""} ${post.pdfTitle || ""}`);
   const haystack = `${title} ${category} ${tags} ${content}`;
 
   let score = 0;
@@ -371,7 +371,7 @@ function renderPostPage(id, type = "post") {
   document.title = `${post.title} | Woman's World`;
 
   const pdf = post.pdf
-    ? `<p><strong>PDF：</strong><a href="${escapeHtml(post.pdf)}" target="_blank" rel="noreferrer">${escapeHtml(post.pdf)}</a></p>`
+    ? `<p class="pdf-link"><strong>PDF：</strong><a href="${escapeHtml(post.pdf)}" target="_blank" rel="noreferrer">${escapeHtml(post.pdfTitle || "查看 PDF")}</a></p>`
     : "";
 
   els.postReader.innerHTML = `
@@ -399,14 +399,17 @@ function renderPostPage(id, type = "post") {
 function renderRelatedPosts(collection, currentPost, type) {
   if (!els.relatedPosts) return;
   const related = collection
-    .filter((post) => post.category === currentPost.category && post.id !== currentPost.id)
+    .filter((post) => post.category === currentPost.category)
     .sort((a, b) => b.date.localeCompare(a.date));
+
+  const sidebarTitle = document.querySelector(".reader-sidebar .section-heading h2");
+  if (sidebarTitle) sidebarTitle.textContent = currentPost.category || "未分类";
 
   els.relatedPosts.innerHTML =
     related
       .map(
         (post) => `
-          <a class="reader-nav-item" href="#${type}/${encodeURIComponent(post.id)}">
+          <a class="reader-nav-item ${post.id === currentPost.id ? "active" : ""}" href="#${type}/${encodeURIComponent(post.id)}">
             <span>${escapeHtml(post.date)}</span>
             <strong>${escapeHtml(post.title)}</strong>
           </a>
@@ -564,8 +567,9 @@ function buildDraftMarkdown() {
     .map((tag) => tag.trim())
     .filter(Boolean);
   const pdf = data.get("pdf").trim();
+  const pdfTitle = data.get("pdfTitle")?.trim() || "";
   const content = data.get("content").trim() || `# ${title}\n\n正文待补充。`;
-  return `---\ntitle: "${title.replaceAll('"', '\\"')}"\ncategory: "${category.replaceAll('"', '\\"')}"\ntags:\n${tags.map((tag) => `  - "${tag.replaceAll('"', '\\"')}"`).join("\n") || "  []"}\ndate: "${new Date().toISOString().slice(0, 10)}"\npdf: "${pdf.replaceAll('"', '\\"')}"\n---\n\n${content}\n`;
+  return `---\ntitle: "${title.replaceAll('"', '\\"')}"\ncategory: "${category.replaceAll('"', '\\"')}"\ntags:\n${tags.map((tag) => `  - "${tag.replaceAll('"', '\\"')}"`).join("\n") || "  []"}\ndate: "${new Date().toISOString().slice(0, 10)}"\npdf: "${pdf.replaceAll('"', '\\"')}"\npdfTitle: "${pdfTitle.replaceAll('"', '\\"')}"\n---\n\n${content}\n`;
 }
 
 function downloadText(fileName, text) {

@@ -78,6 +78,7 @@ function loadMarkdownCollection(collectionDir) {
         tags: Array.isArray(meta.tags) ? meta.tags : [],
         date: meta.date || new Date().toISOString().slice(0, 10),
         pdf: meta.pdf || "",
+        pdfTitle: meta.pdfTitle || "",
         content,
         excerpt: excerpt(content)
       };

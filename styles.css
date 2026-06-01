@@ -430,6 +430,23 @@ body[data-theme="garden"] .theme-strip h1 {
   display: grid;
   gap: 12px;
   padding: 18px;
+  transform: translateY(0) scale(1);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
+  will-change: transform;
+}
+
+.post-card:hover,
+.post-card:focus-within {
+  border-color: color-mix(in srgb, var(--accent) 46%, var(--line));
+  background:
+    radial-gradient(circle at 18% 0%, color-mix(in srgb, var(--accent-soft) 68%, transparent), transparent 42%),
+    var(--surface);
+  box-shadow: 0 26px 62px rgba(42, 78, 101, 0.16);
+  transform: translateY(-5px) scale(1.018);
 }
 
 .post-card h3 {
@@ -599,6 +616,17 @@ body[data-theme="garden"] .theme-strip h1 {
 .resource-card a {
   color: var(--accent);
   font-weight: 800;
+}
+
+.pdf-link {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 9px 13px;
+  background: color-mix(in srgb, var(--accent-soft) 36%, transparent);
 }
 
 .page-head {
@@ -817,8 +845,13 @@ body[data-theme="garden"] .theme-strip h1 {
 }
 
 .reader-nav-item:hover,
+.reader-nav-item.active,
 .adjacent-posts a:hover {
   border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+}
+
+.reader-nav-item.active {
+  background: color-mix(in srgb, var(--accent-soft) 58%, var(--surface));
 }
 
 .reader-nav-item span,
