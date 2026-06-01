@@ -438,6 +438,7 @@ function renderPlans() {
 }
 
 function renderPreview() {
+  if (!els.postForm || !els.livePreview) return;
   const form = els.postForm;
   const title = form.elements.title.value || "文章标题预览";
   const content = form.elements.content.value || "# 文章标题预览\n\n支持 Obsidian 常用公式：\n\n$$\n(2,4), (3,6), (5,10)\n$$";
@@ -534,29 +535,34 @@ els.search.addEventListener("keydown", (event) => {
   renderPosts();
 });
 
-els.markdownFile.addEventListener("change", async (event) => {
-  const file = event.target.files[0];
-  if (!file) return;
-  const text = await file.text();
-  els.postForm.elements.content.value = text;
-  if (!els.postForm.elements.title.value) {
-    els.postForm.elements.title.value = file.name.replace(/\.md$/i, "");
-  }
-  renderPreview();
-});
+if (els.markdownFile && els.postForm) {
+  els.markdownFile.addEventListener("change", async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const text = await file.text();
+    els.postForm.elements.content.value = text;
+    if (!els.postForm.elements.title.value) {
+      els.postForm.elements.title.value = file.name.replace(/\.md$/i, "");
+    }
+    renderPreview();
+  });
+}
 
-els.postForm.addEventListener("input", renderPreview);
+if (els.postForm) {
+  els.postForm.addEventListener("input", renderPreview);
+  els.postForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const title = els.postForm.elements.title.value || "未命名文章";
+    downloadText(`${slugify(title)}.md`, buildDraftMarkdown());
+  });
+}
 
-els.postForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const title = els.postForm.elements.title.value || "未命名文章";
-  downloadText(`${slugify(title)}.md`, buildDraftMarkdown());
-});
-
-els.downloadDraft.addEventListener("click", () => {
-  const title = els.postForm.elements.title.value || "未命名文章";
-  downloadText(`${slugify(title)}.md`, buildDraftMarkdown());
-});
+if (els.downloadDraft && els.postForm) {
+  els.downloadDraft.addEventListener("click", () => {
+    const title = els.postForm.elements.title.value || "未命名文章";
+    downloadText(`${slugify(title)}.md`, buildDraftMarkdown());
+  });
+}
 
 loadSiteData().then(() => {
   renderAll();

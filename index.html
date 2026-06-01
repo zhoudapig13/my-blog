@@ -152,61 +152,6 @@
         </div>
       </section>
 
-      <section id="studioView" class="view">
-        <div class="page-head">
-          <p class="eyebrow">写作台</p>
-          <h2>GitHub 内容管理与 Markdown 预览</h2>
-        </div>
-        <div class="studio-grid">
-          <section class="editor-panel">
-            <h3>可视化后台</h3>
-            <p>
-              文章、个人介绍、资源和计划都存放在 GitHub 仓库文件中。进入后台后，每次保存都会形成一次 Git 提交。
-            </p>
-            <a class="button-link" href="admin/" target="_blank" rel="noreferrer">打开 GitHub CMS</a>
-          </section>
-
-          <form id="postForm" class="editor-panel">
-            <h3>Markdown 草稿预览</h3>
-            <label>
-              标题
-              <input name="title" required placeholder="文章标题" />
-            </label>
-            <label>
-              分类
-              <input name="category" placeholder="例如：论文笔记" />
-            </label>
-            <label>
-              标签
-              <input name="tags" placeholder="用逗号分隔，例如：TabPFN, Markdown" />
-            </label>
-            <label>
-              PDF 链接
-              <input name="pdf" placeholder="https://.../paper.pdf 或 resources/paper.pdf" />
-            </label>
-            <label class="file-drop">
-              导入 Markdown 文件
-              <input id="markdownFile" type="file" accept=".md,text/markdown,text/plain" />
-            </label>
-            <label>
-              Markdown 内容
-              <textarea name="content" rows="12" placeholder="# 标题&#10;&#10;正文支持 Markdown、链接、代码块和 Obsidian 常用公式"></textarea>
-            </label>
-            <div class="button-row">
-              <button type="submit">下载 Markdown</button>
-              <button id="downloadDraft" type="button" class="secondary-button">生成草稿文件</button>
-            </div>
-          </form>
-
-          <section class="preview-panel">
-            <div class="section-heading">
-              <h3>实时预览</h3>
-              <span>Markdown</span>
-            </div>
-            <article id="livePreview" class="reader"></article>
-          </section>
-        </div>
-      </section>
     </main>
 
     <template id="postCardTemplate">
