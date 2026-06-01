@@ -111,6 +111,7 @@ a {
 .brand {
   gap: 10px;
   font-weight: 800;
+  white-space: nowrap;
 }
 
 .brand-mark {
@@ -198,8 +199,8 @@ main {
   justify-content: space-between;
   gap: 24px;
   align-items: end;
-  margin-bottom: 24px;
-  padding: 22px 0;
+  margin-bottom: 30px;
+  padding: 36px 0 28px;
 }
 
 .theme-strip h1,
@@ -216,10 +217,40 @@ main {
 
 .theme-strip h1 {
   max-width: 760px;
-  font-family: var(--font-serif);
-  font-size: clamp(2rem, 5vw, 4.2rem);
-  font-weight: 700;
-  line-height: 1.02;
+  font-family: "Bodoni 72", Didot, "Playfair Display", Georgia, var(--font-serif);
+  font-size: clamp(3.2rem, 9vw, 7.5rem);
+  font-weight: 900;
+  line-height: 0.88;
+  color: transparent;
+  background:
+    linear-gradient(110deg, #18364f 0%, var(--accent) 42%, #9f7aea 72%, #d88fbc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  text-wrap: balance;
+}
+
+body[data-theme="atelier"] .theme-strip h1 {
+  background:
+    linear-gradient(110deg, #2f3136 0%, #6f7f55 48%, #d69d59 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+body[data-theme="garden"] .theme-strip h1 {
+  background:
+    linear-gradient(110deg, #18362c 0%, #477c67 48%, #8cba7a 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+.hero-copy p {
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-family: "Trebuchet MS", var(--font-sans);
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
 }
 
 .eyebrow {
@@ -384,7 +415,8 @@ main {
   background: var(--surface-strong);
 }
 
-.taxonomy-list button {
+.taxonomy-list button,
+.tag {
   cursor: pointer;
 }
 
@@ -403,6 +435,7 @@ main {
 .post-card h3 {
   font-size: 1.25rem;
   line-height: 1.3;
+  cursor: pointer;
 }
 
 .post-meta,
@@ -464,6 +497,14 @@ main {
   padding: clamp(18px, 3vw, 34px);
 }
 
+.post-page {
+  width: min(920px, 100%);
+  margin: 0 auto;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 34%, transparent), transparent 180px),
+    var(--surface);
+}
+
 .reader.hidden {
   display: none;
 }
@@ -504,6 +545,44 @@ main {
   border-left: 4px solid var(--accent);
   padding-left: 16px;
   color: var(--muted);
+}
+
+.reader .callout {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  background: color-mix(in srgb, var(--accent-soft) 42%, transparent);
+}
+
+.math-block {
+  overflow-x: auto;
+  margin: 22px 0;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--accent-soft) 35%, transparent);
+}
+
+.math-inline {
+  color: var(--ink);
+}
+
+.wiki-link {
+  border-bottom: 1px dotted var(--accent);
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.back-link {
+  display: inline-flex;
+  width: fit-content;
+  margin-bottom: 20px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: var(--accent);
+  background: var(--surface-strong);
+  font-weight: 800;
 }
 
 .reader a,

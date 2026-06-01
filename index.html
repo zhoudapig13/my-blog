@@ -3,14 +3,24 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>个人博客</title>
+    <title>Woman's World</title>
     <link rel="stylesheet" href="styles.css" />
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [["\\(", "\\)"]],
+          displayMath: [["\\[", "\\]"]]
+        },
+        svg: { fontCache: "global" }
+      };
+    </script>
+    <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
   </head>
   <body data-theme="journal">
     <header class="topbar">
       <a class="brand" href="#home" aria-label="返回首页">
         <span class="brand-mark"></span>
-        <span>个人博客</span>
+        <span>周大妈的知识厨房</span>
       </a>
       <nav class="nav" aria-label="主导航">
         <a href="#home" data-route="home">首页</a>
@@ -26,15 +36,15 @@
     </header>
 
     <main>
-      <section class="theme-strip" aria-label="样式方案">
-        <div>
-          <p class="eyebrow">浅色样式预览</p>
-          <h1>选择一个适合长期写作的博客气质</h1>
+      <section class="theme-strip" aria-label="站点主题">
+        <div class="hero-copy">
+          <h1>Woman's World</h1>
+          <p>sexy, confident, intelligent</p>
         </div>
         <div class="theme-actions" role="group" aria-label="切换样式">
-          <button class="theme-button" data-theme-choice="atelier">方案 A</button>
-          <button class="theme-button active" data-theme-choice="journal">方案 B</button>
-          <button class="theme-button" data-theme-choice="garden">方案 C</button>
+          <button class="theme-button" data-theme-choice="atelier">纸上晨光</button>
+          <button class="theme-button active" data-theme-choice="journal">雾蓝书房</button>
+          <button class="theme-button" data-theme-choice="garden">青枝庭院</button>
         </div>
       </section>
 
@@ -46,15 +56,13 @@
                 <img id="profileImage" alt="个人照片预览" />
                 <div class="photo-fallback">
                   <span>照片栏</span>
-                  <small>在写作台上传头像</small>
+                  <small>在 data/profile.json 中添加照片路径</small>
                 </div>
               </div>
               <div>
                 <p class="eyebrow">关于我</p>
                 <h2 id="profileName">你的名字</h2>
-                <p id="profileBio">
-                  这里可以放你的研究方向、写作主题、项目经历和联系方式。博客目前支持 Markdown 文章、资源文件和计划进度管理。
-                </p>
+                <p id="profileBio">请在 GitHub 中补充个人简介。</p>
               </div>
             </section>
 
@@ -94,9 +102,12 @@
           </aside>
           <section>
             <div id="postList" class="post-list"></div>
-            <article id="postReader" class="reader hidden"></article>
           </section>
         </div>
+      </section>
+
+      <section id="postView" class="view">
+        <article id="postReader" class="reader post-page"></article>
       </section>
 
       <section id="resourcesView" class="view">
@@ -164,7 +175,7 @@
             </label>
             <label>
               分类
-              <input name="category" placeholder="例如：研究笔记" />
+              <input name="category" placeholder="例如：论文笔记" />
             </label>
             <label>
               标签
@@ -180,7 +191,7 @@
             </label>
             <label>
               Markdown 内容
-              <textarea name="content" rows="12" placeholder="# 标题&#10;&#10;正文支持 Markdown、链接和代码块"></textarea>
+              <textarea name="content" rows="12" placeholder="# 标题&#10;&#10;正文支持 Markdown、链接、代码块和 Obsidian 常用公式"></textarea>
             </label>
             <div class="button-row">
               <button type="submit">下载 Markdown</button>

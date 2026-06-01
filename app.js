@@ -6,12 +6,14 @@ let state = {
   plans: []
 };
 
+const FILTER_ALL = "全部";
 const previewTheme = new URLSearchParams(location.search).get("theme");
-let activeFilter = "全部";
+let activeFilter = FILTER_ALL;
 
 const routeMap = {
   home: document.querySelector("#homeView"),
   blog: document.querySelector("#blogView"),
+  post: document.querySelector("#postView"),
   resources: document.querySelector("#resourcesView"),
   plan: document.querySelector("#planView"),
   studio: document.querySelector("#studioView")
@@ -53,7 +55,7 @@ async function loadSiteData() {
   } catch (error) {
     document.querySelector("main").insertAdjacentHTML(
       "afterbegin",
-      `<div class="empty-state">没有读取到 <code>data/site.json</code>。请先运行 <code>node scripts/build-site-data.js</code>，或通过本地服务器打开网站。</div>`
+      '<div class="empty-state">没有读取到 <code>data/site.json</code>。请先运行 <code>node scripts/build-site-data.js</code>，或通过本地服务器打开网站。</div>'
     );
     console.error(error);
   }
@@ -79,6 +81,8 @@ function slugify(value) {
 function excerpt(content, length = 110) {
   const plain = content
     .replace(/```[\s\S]*?```/g, "")
+    .replace(/\$\$[\s\S]*?\$\$/g, "")
+    .replace(/\$([^$\n]+)\$/g, "$1")
     .replace(/[#>*_`\-[\]()]/g, "")
     .replace(/\s+/g, " ")
     .trim();
@@ -87,15 +91,25 @@ function excerpt(content, length = 110) {
 
 function markdownToHtml(markdown) {
   const blocks = [];
-  let text = escapeHtml(markdown || "");
+  let text = String(markdown || "").replace(/\r\n/g, "\n");
+
+  text = text.replace(/^---\n[\s\S]*?\n---\n?/, "");
 
   text = text.replace(/```([\s\S]*?)```/g, (_, code) => {
-    const token = `@@CODE${blocks.length}@@`;
-    blocks.push(`<pre><code>${code.trim()}</code></pre>`);
+    const token = `@@BLOCK${blocks.length}@@`;
+    blocks.push(`<pre><code>${escapeHtml(code.trim())}</code></pre>`);
     return token;
   });
 
-  const lines = text.split(/\r?\n/);
+  text = text.replace(/\$\$([\s\S]*?)\$\$/g, (_, math) => {
+    const token = `@@BLOCK${blocks.length}@@`;
+    blocks.push(`<div class="math-block">\\[${escapeHtml(cleanMath(math))}\\]</div>`);
+    return token;
+  });
+
+  text = escapeHtml(text);
+
+  const lines = text.split("\n");
   const html = [];
   let listOpen = false;
 
@@ -108,21 +122,25 @@ function markdownToHtml(markdown) {
 
   for (const rawLine of lines) {
     const line = rawLine.trim();
+
     if (!line) {
       closeList();
       continue;
     }
-    if (line.startsWith("@@CODE")) {
+
+    if (line.startsWith("@@BLOCK")) {
       closeList();
       html.push(line);
       continue;
     }
-    if (/^#{1,3}\s/.test(line)) {
+
+    if (/^#{1,4}\s/.test(line)) {
       closeList();
       const level = line.match(/^#+/)[0].length;
-      html.push(`<h${level}>${inlineMarkdown(line.replace(/^#{1,3}\s/, ""))}</h${level}>`);
+      html.push(`<h${level}>${inlineMarkdown(line.replace(/^#{1,4}\s/, ""))}</h${level}>`);
       continue;
     }
+
     if (/^[-*]\s+/.test(line)) {
       if (!listOpen) {
         html.push("<ul>");
@@ -131,29 +149,55 @@ function markdownToHtml(markdown) {
       html.push(`<li>${inlineMarkdown(line.replace(/^[-*]\s+/, ""))}</li>`);
       continue;
     }
+
     if (/^\d+\.\s+/.test(line)) {
-      closeList();
-      html.push(`<p>${inlineMarkdown(line.replace(/^\d+\.\s+/, ""))}</p>`);
+      if (!listOpen) {
+        html.push("<ul>");
+        listOpen = true;
+      }
+      html.push(`<li>${inlineMarkdown(line.replace(/^\d+\.\s+/, ""))}</li>`);
       continue;
     }
+
+    if (/^&gt;\s?\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i.test(line)) {
+      closeList();
+      const label = line.replace(/^&gt;\s?\[!(\w+)\]\s*/i, "$1");
+      html.push(`<blockquote class="callout"><strong>${label}</strong></blockquote>`);
+      continue;
+    }
+
     if (/^&gt;\s?/.test(line)) {
       closeList();
       html.push(`<blockquote>${inlineMarkdown(line.replace(/^&gt;\s?/, ""))}</blockquote>`);
       continue;
     }
+
     closeList();
     html.push(`<p>${inlineMarkdown(line)}</p>`);
   }
 
   closeList();
-  return html.join("\n").replace(/@@CODE(\d+)@@/g, (_, index) => blocks[Number(index)]);
+
+  return html.join("\n").replace(/@@BLOCK(\d+)@@/g, (_, index) => blocks[Number(index)]);
 }
 
 function inlineMarkdown(value) {
   return value
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/`([^`]+)`/g, "<code>$1</code>")
+    .replace(/\[\[([^\]]+)\]\]/g, '<span class="wiki-link">$1</span>')
+    .replace(/\$([^$\n]+)\$/g, (_, math) => `<span class="math-inline">\\(${cleanMath(math)}\\)</span>`)
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+}
+
+function cleanMath(value) {
+  return String(value).trim().replace(/\\([*_])/g, "$1");
+}
+
+function typesetMath(container = document.body) {
+  if (window.MathJax?.typesetPromise) {
+    window.MathJax.typesetPromise([container]).catch((error) => console.error(error));
+  }
 }
 
 function getSearchTerm() {
@@ -174,7 +218,7 @@ function getFilteredPosts() {
       ].join(" ").toLowerCase();
       const matchesSearch = !term || haystack.includes(term);
       const matchesFilter =
-        activeFilter === "全部" ||
+        activeFilter === FILTER_ALL ||
         post.category === activeFilter ||
         post.tags.includes(activeFilter);
       return matchesSearch && matchesFilter;
@@ -183,7 +227,7 @@ function getFilteredPosts() {
 
 function renderProfile() {
   els.profileName.textContent = state.profile.name || "你的名字";
-  els.profileBio.textContent = state.profile.bio || "请在 GitHub CMS 中补充个人简介。";
+  els.profileBio.textContent = state.profile.bio || "请在 GitHub 中补充个人简介。";
 
   const slot = els.profileImage.closest(".photo-slot");
   if (state.profile.photo) {
@@ -204,9 +248,11 @@ function renderTaxonomy() {
   els.categoryList.innerHTML = categories
     .map((category) => `<button type="button" data-filter="${escapeHtml(category)}">${escapeHtml(category)}</button>`)
     .join("");
-  els.tagList.innerHTML = tags.map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`).join("");
+  els.tagList.innerHTML = tags
+    .map((tag) => `<button type="button" class="tag" data-filter="${escapeHtml(tag)}">${escapeHtml(tag)}</button>`)
+    .join("");
 
-  const filters = ["全部", ...categories, ...tags];
+  const filters = [FILTER_ALL, ...categories, ...tags];
   els.blogFilters.innerHTML = filters
     .map(
       (filter) =>
@@ -225,20 +271,18 @@ function createPostCard(post) {
     .map((tag) => `<a href="#blog" data-filter="${escapeHtml(tag)}">${escapeHtml(tag)}</a>`)
     .join("");
   card.querySelector("button").addEventListener("click", () => openPost(post.id));
+  card.querySelector("h3").addEventListener("click", () => openPost(post.id));
   return card;
 }
 
 function renderPosts() {
   const posts = getFilteredPosts();
   els.recentPosts.innerHTML = "";
-  state.posts
-    .slice(0, 4)
-    .forEach((post) => els.recentPosts.append(createPostCard(post)));
+  state.posts.slice(0, 4).forEach((post) => els.recentPosts.append(createPostCard(post)));
 
   els.postList.innerHTML = "";
   if (!posts.length) {
     els.postList.innerHTML = '<div class="empty-state">没有匹配的文章。换个关键词试试，或者去 GitHub CMS 发布一篇新的。</div>';
-    els.postReader.classList.add("hidden");
     return;
   }
 
@@ -246,19 +290,27 @@ function renderPosts() {
 }
 
 function openPost(id) {
-  const post = state.posts.find((item) => item.id === id);
-  if (!post) return;
-  location.hash = "blog";
-  els.postReader.classList.remove("hidden");
+  location.hash = `post/${encodeURIComponent(id)}`;
+}
+
+function renderPostPage(id) {
+  const post = state.posts.find((item) => item.id === decodeURIComponent(id || ""));
+  if (!post) {
+    els.postReader.innerHTML = '<div class="empty-state">没有找到这篇文章。<a href="#blog">返回博客列表</a></div>';
+    return;
+  }
+
   const pdf = post.pdf
     ? `<p><strong>PDF：</strong><a href="${escapeHtml(post.pdf)}" target="_blank" rel="noreferrer">${escapeHtml(post.pdf)}</a></p>`
     : "";
+
   els.postReader.innerHTML = `
+    <a class="back-link" href="#blog">返回文章列表</a>
     <p class="eyebrow">${escapeHtml(post.category || "未分类")} / ${escapeHtml(post.date)}</p>
     ${pdf}
     ${markdownToHtml(post.content)}
   `;
-  els.postReader.scrollIntoView({ behavior: "smooth", block: "start" });
+  typesetMath(els.postReader);
 }
 
 function renderResources() {
@@ -277,7 +329,7 @@ function renderResources() {
             ${
               resource.url
                 ? `<a href="${escapeHtml(resource.url)}" target="_blank" rel="noreferrer">打开资源</a>`
-                : "<span class=\"empty-state\">尚未填写链接</span>"
+                : '<span class="empty-state">尚未填写链接</span>'
             }
           </article>
         `
@@ -315,8 +367,9 @@ function renderPlans() {
 function renderPreview() {
   const form = els.postForm;
   const title = form.elements.title.value || "文章标题预览";
-  const content = form.elements.content.value || "# 文章标题预览\n\n在左侧输入 Markdown，这里会实时显示排版效果。";
+  const content = form.elements.content.value || "# 文章标题预览\n\n支持 Obsidian 常用公式：\n\n$$\n(2,4), (3,6), (5,10)\n$$";
   els.livePreview.innerHTML = `<p class="eyebrow">实时预览</p>${markdownToHtml(`# ${title}\n\n${content}`)}`;
+  typesetMath(els.livePreview);
 }
 
 function renderAll() {
@@ -332,14 +385,21 @@ function renderAll() {
   renderPreview();
 }
 
-function setRoute(route) {
+function setRoute(rawRoute) {
+  const [route, id] = (rawRoute || "home").split("/");
   const view = routeMap[route] ? route : "home";
+
   Object.entries(routeMap).forEach(([key, element]) => {
     element.classList.toggle("active", key === view);
   });
   document.querySelectorAll(".nav a").forEach((link) => {
     link.classList.toggle("active", link.dataset.route === view);
   });
+
+  if (view === "post") {
+    renderPostPage(id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
 }
 
 function buildDraftMarkdown() {
@@ -414,5 +474,7 @@ els.downloadDraft.addEventListener("click", () => {
   downloadText(`${slugify(title)}.md`, buildDraftMarkdown());
 });
 
-setRoute(location.hash.replace("#", ""));
-loadSiteData().then(renderAll);
+loadSiteData().then(() => {
+  renderAll();
+  setRoute(location.hash.replace("#", ""));
+});

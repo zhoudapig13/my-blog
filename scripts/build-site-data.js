@@ -85,7 +85,6 @@ function loadPosts() {
 }
 
 const siteData = {
-  generatedAt: new Date().toISOString(),
   profile: readJson("data/profile.json", {}),
   resources: readJson("data/resources.json", { items: [] }).items || [],
   plans: readJson("data/plans.json", { items: [] }).items || [],
