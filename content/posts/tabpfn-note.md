@@ -1,6 +1,6 @@
 ---
 title: "TabPFN 想法笔记：从快速预测到研究工作流"
-category: "研究笔记"
+category: "tabular data"
 tags:
   - "TabPFN"
   - "机器学习"
