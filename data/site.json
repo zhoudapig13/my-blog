@@ -20,9 +20,10 @@
   ],
   "friends": [
     {
-      "name": "GitHub",
+      "title": "GitHub",
+      "subtitle": "我的 GitHub 主页",
       "url": "https://github.com/zhoudapig13",
-      "description": "我的 GitHub 主页"
+      "avatar": "resources/uploads/avatar.png"
     }
   ],
   "plans": [

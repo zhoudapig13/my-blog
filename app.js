@@ -58,7 +58,7 @@ async function loadSiteData() {
     state = {
       ...state,
       ...data,
-      theme: ["atelier", "journal", "garden"].includes(previewTheme) ? previewTheme : state.theme
+      theme: ["journal", "rose", "atelier", "garden"].includes(previewTheme) ? previewTheme : state.theme
     };
   } catch (error) {
     document.querySelector("main").insertAdjacentHTML(
@@ -383,6 +383,7 @@ function renderPostPage(id, type = "post") {
       <button id="readerToggleInline" class="secondary-button" type="button">切换目录</button>
     </div>
     <p class="eyebrow">${escapeHtml(post.category || "未分类")} / ${escapeHtml(post.date)}</p>
+    <h1 class="reader-title">${escapeHtml(post.title)}</h1>
     ${pdf}
     ${markdownToHtml(post.content)}
     ${renderAdjacentPosts(collection, post, type)}
@@ -496,14 +497,21 @@ function renderFriends() {
   els.friendCount.textContent = state.friends.length;
   els.friendList.innerHTML =
     state.friends
-      .map(
-        (friend) => `
-          <a class="friend-link" href="${escapeHtml(friend.url)}" target="_blank" rel="noreferrer">
-            <strong>${escapeHtml(friend.name)}</strong>
-            <span>${escapeHtml(friend.description || friend.url)}</span>
+      .map((friend) => {
+        const title = friend.title || friend.name || "未命名友链";
+        const subtitle = friend.subtitle || friend.description || friend.url || "";
+        const avatar = friend.avatar || "resources/uploads/avatar.png";
+
+        return `
+          <a class="friend-link" href="${escapeHtml(friend.url || "#")}" target="_blank" rel="noreferrer">
+            <img class="friend-avatar" src="${escapeHtml(avatar)}" alt="${escapeHtml(title)}" loading="lazy" />
+            <span class="friend-copy">
+              <strong>${escapeHtml(title)}</strong>
+              <small>${escapeHtml(subtitle)}</small>
+            </span>
           </a>
-        `
-      )
+        `;
+      })
       .join("") || '<div class="empty-state compact">还没有友链。</div>';
 }
 
@@ -635,7 +643,7 @@ document.addEventListener("pointermove", (event) => {
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
     const distance = Math.hypot(event.clientX - centerX, event.clientY - centerY);
-    const influence = Math.max(0, 1 - distance / 260);
+    const influence = Math.max(0, 1 - distance / 340);
 
     if (influence <= 0) {
       card.classList.remove("is-near");
@@ -646,9 +654,9 @@ document.addEventListener("pointermove", (event) => {
     }
 
     card.classList.add("is-near");
-    card.style.setProperty("--card-lift", `${(-3 - influence * 8).toFixed(2)}px`);
-    card.style.setProperty("--card-scale", (1 + influence * 0.035).toFixed(3));
-    card.style.setProperty("--card-shadow-alpha", (0.1 + influence * 0.14).toFixed(3));
+    card.style.setProperty("--card-lift", `${(-4 - influence * 14).toFixed(2)}px`);
+    card.style.setProperty("--card-scale", (1 + influence * 0.055).toFixed(3));
+    card.style.setProperty("--card-shadow-alpha", (0.12 + influence * 0.18).toFixed(3));
   });
 });
 

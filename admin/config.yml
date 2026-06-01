@@ -75,9 +75,10 @@ collections:
             name: "items"
             widget: "list"
             fields:
-              - { label: "名称", name: "name", widget: "string" }
+              - { label: "头像", name: "avatar", widget: "image", required: false }
+              - { label: "标题", name: "title", widget: "string" }
+              - { label: "副标题", name: "subtitle", widget: "text", required: false }
               - { label: "链接", name: "url", widget: "string" }
-              - { label: "说明", name: "description", widget: "text", required: false }
 
       - name: "plans"
         label: "计划"
