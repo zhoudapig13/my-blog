@@ -7,6 +7,7 @@ tags:
   - "通用模型"
 date: "2026-06-01"
 pdf: "https://arxiv.org/pdf/2502.05564"
+pdfTitle: "A Tabular Foundation Model for In-Context Learning on Large Data"
 ---
 ## 2. 相关工作
 
