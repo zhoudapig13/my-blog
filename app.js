@@ -32,8 +32,8 @@ const els = {
   diaryList: document.querySelector("#diaryList"),
   postReader: document.querySelector("#postReader"),
   relatedPosts: document.querySelector("#relatedPosts"),
+  articleToc: document.querySelector("#articleToc"),
   readerLayout: document.querySelector("#readerLayout"),
-  readerToggle: document.querySelector("#readerToggle"),
   categoryList: document.querySelector("#categoryList"),
   tagList: document.querySelector("#tagList"),
   friendList: document.querySelector("#friendList"),
@@ -86,6 +86,20 @@ function slugify(value) {
     .replace(/^-+|-+$/g, "") || `post-${Date.now()}`;
 }
 
+function headingSlug(value, counts = new Map()) {
+  const base =
+    String(value)
+      .replace(/&[#a-z0-9]+;/gi, " ")
+      .replace(/[*_`[\]$]/g, "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}]+/gu, "-")
+      .replace(/^-+|-+$/g, "") || "section";
+  const count = counts.get(base) || 0;
+  counts.set(base, count + 1);
+  return count ? `${base}-${count + 1}` : base;
+}
+
 function excerpt(content, length = 110) {
   const plain = content
     .replace(/```[\s\S]*?```/g, "")
@@ -119,6 +133,7 @@ function markdownToHtml(markdown) {
 
   const lines = text.split("\n");
   const html = [];
+  const headingCounts = new Map();
   let listOpen = false;
 
   const closeList = () => {
@@ -145,7 +160,9 @@ function markdownToHtml(markdown) {
     if (/^#{1,4}\s/.test(line)) {
       closeList();
       const level = line.match(/^#+/)[0].length;
-      html.push(`<h${level}>${inlineMarkdown(line.replace(/^#{1,4}\s/, ""))}</h${level}>`);
+      const headingText = line.replace(/^#{1,4}\s/, "");
+      const id = headingSlug(headingText, headingCounts);
+      html.push(`<h${level} id="${escapeHtml(id)}">${inlineMarkdown(headingText)}</h${level}>`);
       continue;
     }
 
@@ -206,6 +223,30 @@ function typesetMath(container = document.body) {
   if (window.MathJax?.typesetPromise) {
     window.MathJax.typesetPromise([container]).catch((error) => console.error(error));
   }
+}
+
+function extractArticleToc(markdown) {
+  const counts = new Map();
+  return String(markdown || "")
+    .replace(/\r\n/g, "\n")
+    .replace(/^---\n[\s\S]*?\n---\n?/, "")
+    .replace(/```[\s\S]*?```/g, "")
+    .replace(/\$\$[\s\S]*?\$\$/g, "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => /^#{1,4}\s+\S/.test(line))
+    .map((line) => {
+      const level = line.match(/^#+/)[0].length;
+      const text = line
+        .replace(/^#{1,4}\s+/, "")
+        .replace(/\*\*(.*?)\*\*/g, "$1")
+        .replace(/`([^`]+)`/g, "$1")
+        .replace(/\[\[([^\]]+)\]\]/g, "$1")
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+        .replace(/\$([^$\n]+)\$/g, "$1")
+        .trim();
+      return { id: headingSlug(escapeHtml(text), counts), level, text };
+    });
 }
 
 function getSearchTerm() {
@@ -380,7 +421,8 @@ function renderPostPage(id, type = "post") {
   els.postReader.innerHTML = `
     <div class="reader-actions">
       <a class="back-link" href="#${getListRoute(type)}">返回列表</a>
-      <button id="readerToggleInline" class="secondary-button" type="button">切换目录</button>
+      <button class="secondary-button" type="button" data-reader-panel="left">收起书架</button>
+      <button class="secondary-button" type="button" data-reader-panel="right">收起脉络</button>
     </div>
     <p class="eyebrow">${escapeHtml(post.category || "未分类")} / ${escapeHtml(post.date)}</p>
     <h1 class="reader-title">${escapeHtml(post.title)}</h1>
@@ -396,6 +438,8 @@ function renderPostPage(id, type = "post") {
     </section>
   `;
   renderRelatedPosts(collection, post, type);
+  renderArticleToc(post.content);
+  syncReaderPanelButtons();
   typesetMath(els.postReader);
   renderComments(post, type);
 }
@@ -420,6 +464,21 @@ function renderRelatedPosts(collection, currentPost, type) {
         `
       )
       .join("") || '<div class="empty-state compact">这个目录下暂无其他内容。</div>';
+}
+
+function renderArticleToc(content) {
+  if (!els.articleToc) return;
+  const headings = extractArticleToc(content);
+  els.articleToc.innerHTML =
+    headings
+      .map(
+        (heading) => `
+          <button class="article-toc-item level-${heading.level}" type="button" data-toc-target="${escapeHtml(heading.id)}">
+            ${escapeHtml(heading.text)}
+          </button>
+        `
+      )
+      .join("") || '<div class="empty-state compact">这篇文章还没有标题结构。</div>';
 }
 
 function renderAdjacentPosts(collection, currentPost, type) {
@@ -611,12 +670,31 @@ function downloadText(fileName, text) {
   URL.revokeObjectURL(link.href);
 }
 
+function syncReaderPanelButtons() {
+  if (!els.readerLayout) return;
+  document.querySelectorAll("[data-reader-panel='left']").forEach((button) => {
+    button.textContent = els.readerLayout.classList.contains("hide-left") ? "展开书架" : "收起书架";
+  });
+  document.querySelectorAll("[data-reader-panel='right']").forEach((button) => {
+    button.textContent = els.readerLayout.classList.contains("hide-right") ? "展开脉络" : "收起脉络";
+  });
+}
+
 document.addEventListener("click", (event) => {
-  const readerToggle = event.target.closest("#readerToggle, #readerToggleInline");
-  if (readerToggle && els.readerLayout) {
-    els.readerLayout.classList.toggle("is-expanded");
-    if (els.readerToggle) {
-      els.readerToggle.textContent = els.readerLayout.classList.contains("is-expanded") ? "显示" : "隐藏";
+  const readerPanelButton = event.target.closest("[data-reader-panel]");
+  if (readerPanelButton && els.readerLayout) {
+    const side = readerPanelButton.dataset.readerPanel;
+    els.readerLayout.classList.toggle(side === "left" ? "hide-left" : "hide-right");
+    syncReaderPanelButtons();
+    return;
+  }
+
+  const tocButton = event.target.closest("[data-toc-target]");
+  if (tocButton) {
+    const target = document.getElementById(tocButton.dataset.tocTarget);
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+      document.querySelectorAll(".article-toc-item").forEach((item) => item.classList.toggle("active", item === tocButton));
     }
     return;
   }

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Woman's World</title>
-    <link rel="stylesheet" href="styles.css?v=20260602-style1" />
+    <link rel="stylesheet" href="styles.css?v=20260602-toc1" />
     <script>
       window.MathJax = {
         tex: {
@@ -133,11 +133,18 @@
           <aside class="reader-sidebar">
             <div class="section-heading">
               <h2>目录</h2>
-              <button id="readerToggle" class="icon-button" type="button" aria-label="隐藏目录">隐藏</button>
+              <button class="icon-button" type="button" data-reader-panel="left" aria-label="隐藏同类文章">隐藏</button>
             </div>
             <div id="relatedPosts" class="reader-nav-list"></div>
           </aside>
           <article id="postReader" class="reader post-page"></article>
+          <aside class="reader-toc-sidebar">
+            <div class="section-heading">
+              <h2>文章脉络</h2>
+              <button class="icon-button" type="button" data-reader-panel="right" aria-label="隐藏文章脉络">隐藏</button>
+            </div>
+            <nav id="articleToc" class="article-toc-list" aria-label="文章结构"></nav>
+          </aside>
         </div>
       </section>
 
@@ -190,6 +197,6 @@
     </template>
 
     <script src="comments-config.js?v=20260601-reader2"></script>
-    <script src="app.js?v=20260602-style1"></script>
+    <script src="app.js?v=20260602-toc1"></script>
   </body>
 </html>
