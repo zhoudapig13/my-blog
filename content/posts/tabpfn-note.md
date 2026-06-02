@@ -48,4 +48,10 @@ sexy, confident, intelligent.
 下面这位就是本博客的站长本人：
 
 
-![粘贴图片](/my-blog/resources/uploads/pasted-1780404897301.jpg)
+
+
+
+
+
+
+![粘贴图片](/my-blog/resources/uploads/pasted-1780405315325.jpg)
