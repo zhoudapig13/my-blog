@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Woman's World</title>
-    <link rel="stylesheet" href="styles.css?v=20260602-toc2" />
+    <link rel="stylesheet" href="styles.css?v=20260602-writer1" />
     <script>
       window.MathJax = {
         tex: {
@@ -28,6 +28,7 @@
         <a href="#diary" data-route="diary">日记</a>
         <a href="#resources" data-route="resources">资源</a>
         <a href="#plan" data-route="plan">计划</a>
+        <a id="writerNav" href="#writer" data-route="writer" hidden>写作台</a>
       </nav>
       <label class="search">
         <span class="search-icon"></span>
@@ -184,6 +185,96 @@
         </div>
       </section>
 
+      <section id="writerView" class="view">
+        <div class="page-head">
+          <p class="eyebrow">Owner Studio</p>
+          <h2>在线写作台</h2>
+          <p class="muted-note">登录后可以在当前网页创建或修改博客，保存时会自动提交到 GitHub 仓库。</p>
+        </div>
+
+        <section id="writerLoginPanel" class="editor-panel writer-login-panel">
+          <h3>站长登录</h3>
+          <p>请输入 GitHub Personal Access Token。Token 只保存在当前浏览器会话里，不会写进仓库。</p>
+          <label>
+            GitHub Token
+            <input id="githubTokenInput" type="password" autocomplete="off" placeholder="github_pat_..." />
+          </label>
+          <div class="writer-actions">
+            <button id="githubLoginButton" class="button-link" type="button">登录写作台</button>
+            <a class="secondary-button" href="https://github.com/settings/personal-access-tokens" target="_blank" rel="noreferrer">创建 Token</a>
+          </div>
+          <p class="muted-note">建议 Token 只授予当前仓库 contents 读写权限。</p>
+          <div id="writerLoginMessage" class="writer-message"></div>
+        </section>
+
+        <div id="writerStudio" class="studio-grid writer-studio" hidden>
+          <section class="editor-panel markdown-editor-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Markdown</p>
+                <h2>左侧编辑</h2>
+              </div>
+              <button id="githubLogoutButton" class="secondary-button" type="button">退出</button>
+            </div>
+            <p id="writerAuthStatus" class="muted-note"></p>
+            <label>
+              选择已有文章
+              <select id="writerPostSelect">
+                <option value="">新建文章</option>
+              </select>
+            </label>
+            <div class="writer-inline-grid">
+              <label>
+                标题
+                <input id="writerTitle" type="text" placeholder="文章标题" />
+              </label>
+              <label>
+                日期
+                <input id="writerDate" type="date" />
+              </label>
+            </div>
+            <div class="writer-inline-grid">
+              <label>
+                分类
+                <input id="writerCategory" type="text" placeholder="tabular data" />
+              </label>
+              <label>
+                标签
+                <input id="writerTags" type="text" placeholder="机器学习, transformer" />
+              </label>
+            </div>
+            <label>
+              PDF 链接
+              <input id="writerPdf" type="url" placeholder="https://arxiv.org/pdf/xxxx.xxxxx" />
+            </label>
+            <label>
+              PDF 显示名称
+              <input id="writerPdfTitle" type="text" placeholder="A Paper Title" />
+            </label>
+            <label>
+              正文
+              <textarea id="writerContent" rows="24" placeholder="在这里写 Markdown。可以直接 Ctrl+V 粘贴图片，图片会上传到 GitHub 并自动插入链接。"></textarea>
+            </label>
+            <div class="writer-actions">
+              <button id="writerNewButton" class="secondary-button" type="button">新建</button>
+              <button id="writerSaveButton" class="button-link" type="button">保存到 GitHub</button>
+            </div>
+            <div id="writerSaveMessage" class="writer-message"></div>
+          </section>
+
+          <section class="preview-panel markdown-preview-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Preview</p>
+                <h2>右侧预览</h2>
+              </div>
+              <span id="writerCurrentPath">未保存</span>
+            </div>
+            <article id="writerPreview" class="reader writer-preview"></article>
+          </section>
+        </div>
+      </section>
+
     </main>
 
     <template id="postCardTemplate">
@@ -197,6 +288,6 @@
     </template>
 
     <script src="comments-config.js?v=20260601-reader2"></script>
-    <script src="app.js?v=20260602-toc2"></script>
+    <script src="app.js?v=20260602-writer1"></script>
   </body>
 </html>

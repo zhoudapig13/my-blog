@@ -9,8 +9,19 @@ let state = {
 };
 
 const FILTER_ALL = "全部";
+const GITHUB_OWNER = "zhoudapig13";
+const GITHUB_REPO = "my-blog";
+const GITHUB_BRANCH = "main";
+const TOKEN_STORAGE_KEY = "my-blog.github-token";
 const previewTheme = new URLSearchParams(location.search).get("theme");
 let activeFilter = FILTER_ALL;
+let writerState = {
+  token: sessionStorage.getItem(TOKEN_STORAGE_KEY) || "",
+  user: null,
+  files: [],
+  currentPath: "",
+  currentSha: ""
+};
 
 const routeMap = {
   home: document.querySelector("#homeView"),
@@ -18,7 +29,8 @@ const routeMap = {
   diary: document.querySelector("#diaryView"),
   post: document.querySelector("#postView"),
   resources: document.querySelector("#resourcesView"),
-  plan: document.querySelector("#planView")
+  plan: document.querySelector("#planView"),
+  writer: document.querySelector("#writerView")
 };
 
 const els = {
@@ -44,6 +56,27 @@ const els = {
   resourceList: document.querySelector("#resourceList"),
   planList: document.querySelector("#planList"),
   progressValue: document.querySelector("#progressValue"),
+  writerNav: document.querySelector("#writerNav"),
+  writerLoginPanel: document.querySelector("#writerLoginPanel"),
+  writerStudio: document.querySelector("#writerStudio"),
+  githubTokenInput: document.querySelector("#githubTokenInput"),
+  githubLoginButton: document.querySelector("#githubLoginButton"),
+  githubLogoutButton: document.querySelector("#githubLogoutButton"),
+  writerLoginMessage: document.querySelector("#writerLoginMessage"),
+  writerAuthStatus: document.querySelector("#writerAuthStatus"),
+  writerPostSelect: document.querySelector("#writerPostSelect"),
+  writerTitle: document.querySelector("#writerTitle"),
+  writerDate: document.querySelector("#writerDate"),
+  writerCategory: document.querySelector("#writerCategory"),
+  writerTags: document.querySelector("#writerTags"),
+  writerPdf: document.querySelector("#writerPdf"),
+  writerPdfTitle: document.querySelector("#writerPdfTitle"),
+  writerContent: document.querySelector("#writerContent"),
+  writerPreview: document.querySelector("#writerPreview"),
+  writerCurrentPath: document.querySelector("#writerCurrentPath"),
+  writerNewButton: document.querySelector("#writerNewButton"),
+  writerSaveButton: document.querySelector("#writerSaveButton"),
+  writerSaveMessage: document.querySelector("#writerSaveMessage"),
   postForm: document.querySelector("#postForm"),
   markdownFile: document.querySelector("#markdownFile"),
   livePreview: document.querySelector("#livePreview"),
@@ -208,6 +241,7 @@ function markdownToHtml(markdown) {
 
 function inlineMarkdown(value) {
   return value
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" />')
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\[\[([^\]]+)\]\]/g, '<span class="wiki-link">$1</span>')
@@ -624,6 +658,7 @@ function renderAll() {
   renderFriends();
   renderPlans();
   renderPreview();
+  updateWriterAuthView();
 }
 
 function setRoute(rawRoute) {
@@ -659,6 +694,276 @@ function buildDraftMarkdown() {
   const pdfTitle = data.get("pdfTitle")?.trim() || "";
   const content = data.get("content").trim() || `# ${title}\n\n正文待补充。`;
   return `---\ntitle: "${title.replaceAll('"', '\\"')}"\ncategory: "${category.replaceAll('"', '\\"')}"\ntags:\n${tags.map((tag) => `  - "${tag.replaceAll('"', '\\"')}"`).join("\n") || "  []"}\ndate: "${new Date().toISOString().slice(0, 10)}"\npdf: "${pdf.replaceAll('"', '\\"')}"\npdfTitle: "${pdfTitle.replaceAll('"', '\\"')}"\n---\n\n${content}\n`;
+}
+
+function bytesToBase64(bytes) {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function textToBase64(text) {
+  return bytesToBase64(new TextEncoder().encode(text));
+}
+
+function base64ToText(base64) {
+  const binary = atob(base64.replace(/\s/g, ""));
+  const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  return new TextDecoder().decode(bytes);
+}
+
+function escapeYaml(value) {
+  return String(value || "").replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+}
+
+function parseMarkdownFile(source, fallbackTitle = "") {
+  const match = String(source || "").match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+  if (!match) {
+    return {
+      meta: {
+        title: fallbackTitle,
+        category: "",
+        tags: [],
+        date: new Date().toISOString().slice(0, 10),
+        pdf: "",
+        pdfTitle: ""
+      },
+      content: String(source || "")
+    };
+  }
+
+  const meta = {};
+  let currentKey = "";
+  match[1].split("\n").forEach((line) => {
+    const listItem = line.match(/^\s*-\s+["']?(.+?)["']?\s*$/);
+    if (listItem && currentKey) {
+      meta[currentKey] = Array.isArray(meta[currentKey]) ? meta[currentKey] : [];
+      meta[currentKey].push(listItem[1]);
+      return;
+    }
+
+    const pair = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+    if (!pair) return;
+    currentKey = pair[1];
+    const value = pair[2].trim();
+    meta[currentKey] = value ? value.replace(/^["']|["']$/g, "") : [];
+  });
+
+  return {
+    meta: {
+      title: meta.title || fallbackTitle,
+      category: Array.isArray(meta.category) ? meta.category[0] || "" : meta.category || "",
+      tags: Array.isArray(meta.tags) ? meta.tags : [],
+      date: meta.date || new Date().toISOString().slice(0, 10),
+      pdf: meta.pdf || "",
+      pdfTitle: meta.pdfTitle || ""
+    },
+    content: match[2].trim()
+  };
+}
+
+function buildWriterMarkdown() {
+  const title = els.writerTitle.value.trim() || "未命名文章";
+  const category = els.writerCategory.value.trim() || "未分类";
+  const tags = els.writerTags.value
+    .split(/[,，]/)
+    .map((tag) => tag.trim())
+    .filter(Boolean);
+  const date = els.writerDate.value || new Date().toISOString().slice(0, 10);
+  const pdf = els.writerPdf.value.trim();
+  const pdfTitle = els.writerPdfTitle.value.trim();
+  const content = els.writerContent.value.trim() || `# ${title}\n\n正文待补充。`;
+
+  return `---\ntitle: "${escapeYaml(title)}"\ncategory: "${escapeYaml(category)}"\ntags:\n${tags.map((tag) => `  - "${escapeYaml(tag)}"`).join("\n") || "  []"}\ndate: "${escapeYaml(date)}"\npdf: "${escapeYaml(pdf)}"\npdfTitle: "${escapeYaml(pdfTitle)}"\n---\n\n${content}\n`;
+}
+
+function setWriterMessage(target, message, type = "info") {
+  if (!target) return;
+  target.textContent = message;
+  target.dataset.type = type;
+}
+
+async function githubRequest(path, options = {}) {
+  if (!writerState.token) throw new Error("请先登录写作台。");
+  const response = await fetch(path.startsWith("https://") ? path : `https://api.github.com${path}`, {
+    ...options,
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${writerState.token}`,
+      "X-GitHub-Api-Version": "2022-11-28",
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(options.headers || {})
+    }
+  });
+
+  if (!response.ok) {
+    let detail = "";
+    try {
+      detail = (await response.json()).message || "";
+    } catch {
+      detail = await response.text();
+    }
+    throw new Error(detail || `GitHub API ${response.status}`);
+  }
+
+  if (response.status === 204) return null;
+  return response.json();
+}
+
+function updateWriterAuthView() {
+  const isOwner = writerState.user?.login === GITHUB_OWNER;
+  if (els.writerNav) els.writerNav.hidden = !isOwner;
+  if (els.writerLoginPanel) els.writerLoginPanel.hidden = Boolean(isOwner);
+  if (els.writerStudio) els.writerStudio.hidden = !isOwner;
+  if (els.writerAuthStatus) {
+    els.writerAuthStatus.textContent = isOwner
+      ? `已以 ${writerState.user.login} 身份连接 GitHub，保存会提交到 ${GITHUB_OWNER}/${GITHUB_REPO}。`
+      : "";
+  }
+}
+
+function resetWriterForm() {
+  writerState.currentPath = "";
+  writerState.currentSha = "";
+  if (els.writerPostSelect) els.writerPostSelect.value = "";
+  if (els.writerCurrentPath) els.writerCurrentPath.textContent = "新建文章";
+  if (els.writerTitle) els.writerTitle.value = "";
+  if (els.writerDate) els.writerDate.value = new Date().toISOString().slice(0, 10);
+  if (els.writerCategory) els.writerCategory.value = "";
+  if (els.writerTags) els.writerTags.value = "";
+  if (els.writerPdf) els.writerPdf.value = "";
+  if (els.writerPdfTitle) els.writerPdfTitle.value = "";
+  if (els.writerContent) els.writerContent.value = "";
+  renderWriterPreview();
+}
+
+function fillWriterForm(markdown, file) {
+  const parsed = parseMarkdownFile(markdown, file?.name?.replace(/\.md$/i, "") || "");
+  writerState.currentPath = file?.path || "";
+  writerState.currentSha = file?.sha || "";
+  els.writerTitle.value = parsed.meta.title;
+  els.writerDate.value = parsed.meta.date;
+  els.writerCategory.value = parsed.meta.category;
+  els.writerTags.value = parsed.meta.tags.join(", ");
+  els.writerPdf.value = parsed.meta.pdf;
+  els.writerPdfTitle.value = parsed.meta.pdfTitle;
+  els.writerContent.value = parsed.content;
+  els.writerCurrentPath.textContent = writerState.currentPath || "新建文章";
+  renderWriterPreview();
+}
+
+function renderWriterPreview() {
+  if (!els.writerPreview) return;
+  const title = els.writerTitle?.value?.trim() || "文章标题";
+  const date = els.writerDate?.value || new Date().toISOString().slice(0, 10);
+  const category = els.writerCategory?.value?.trim() || "未分类";
+  const pdf = els.writerPdf?.value?.trim();
+  const pdfTitle = els.writerPdfTitle?.value?.trim();
+  const content = els.writerContent?.value || "";
+  els.writerPreview.innerHTML = `
+    <p class="eyebrow">${escapeHtml(category)} / ${escapeHtml(date)}</p>
+    <h1 class="reader-title">${escapeHtml(title)}</h1>
+    ${pdf ? `<p class="pdf-link"><strong>PDF：</strong><a href="${escapeHtml(pdf)}" target="_blank" rel="noreferrer">${escapeHtml(pdfTitle || "查看 PDF")}</a></p>` : ""}
+    ${markdownToHtml(content)}
+  `;
+  typesetMath(els.writerPreview);
+}
+
+async function verifyWriterToken(token, silent = false) {
+  writerState.token = token.trim();
+  if (!writerState.token) throw new Error("请先填写 GitHub Token。");
+  const user = await githubRequest("/user");
+  if (user.login !== GITHUB_OWNER) {
+    writerState.token = "";
+    sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+    throw new Error(`当前登录用户是 ${user.login}，不是站长 ${GITHUB_OWNER}。`);
+  }
+  writerState.user = user;
+  sessionStorage.setItem(TOKEN_STORAGE_KEY, writerState.token);
+  updateWriterAuthView();
+  if (!silent) setWriterMessage(els.writerLoginMessage, "登录成功，写作台已打开。", "success");
+  await loadWriterPosts();
+  resetWriterForm();
+}
+
+async function loadWriterPosts() {
+  if (!els.writerPostSelect || writerState.user?.login !== GITHUB_OWNER) return;
+  const files = await githubRequest(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/content/posts?ref=${GITHUB_BRANCH}`);
+  writerState.files = files
+    .filter((file) => file.type === "file" && file.name.endsWith(".md"))
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  els.writerPostSelect.innerHTML = '<option value="">新建文章</option>';
+  writerState.files.forEach((file) => {
+    const option = document.createElement("option");
+    option.value = file.path;
+    option.textContent = file.name.replace(/\.md$/i, "");
+    els.writerPostSelect.append(option);
+  });
+}
+
+async function loadWriterPost(path) {
+  if (!path) {
+    resetWriterForm();
+    return;
+  }
+  const file = await githubRequest(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(path).replaceAll("%2F", "/")}?ref=${GITHUB_BRANCH}`);
+  fillWriterForm(base64ToText(file.content), file);
+}
+
+async function saveGithubFile(path, contentBase64, message, sha = "") {
+  const body = {
+    message,
+    content: contentBase64,
+    branch: GITHUB_BRANCH
+  };
+  if (sha) body.sha = sha;
+  return githubRequest(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(path).replaceAll("%2F", "/")}`, {
+    method: "PUT",
+    body: JSON.stringify(body)
+  });
+}
+
+async function saveWriterPost() {
+  const title = els.writerTitle.value.trim() || "未命名文章";
+  const path = writerState.currentPath || `content/posts/${slugify(title)}.md`;
+  let sha = writerState.currentSha;
+
+  if (!sha) {
+    try {
+      const existing = await githubRequest(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(path).replaceAll("%2F", "/")}?ref=${GITHUB_BRANCH}`);
+      sha = existing.sha;
+    } catch {
+      sha = "";
+    }
+  }
+
+  const result = await saveGithubFile(path, textToBase64(buildWriterMarkdown()), `Update blog post: ${title}`, sha);
+  writerState.currentPath = path;
+  writerState.currentSha = result.content.sha;
+  els.writerCurrentPath.textContent = path;
+  await loadWriterPosts();
+  els.writerPostSelect.value = path;
+  setWriterMessage(els.writerSaveMessage, "已提交到 GitHub。GitHub Actions 部署完成后，线上博客会自动更新。", "success");
+}
+
+function insertAtTextarea(textarea, text) {
+  const start = textarea.selectionStart ?? textarea.value.length;
+  const end = textarea.selectionEnd ?? textarea.value.length;
+  textarea.value = `${textarea.value.slice(0, start)}${text}${textarea.value.slice(end)}`;
+  textarea.selectionStart = textarea.selectionEnd = start + text.length;
+  textarea.focus();
+}
+
+async function uploadPastedImage(file) {
+  const extension = (file.type.split("/")[1] || "png").replace("jpeg", "jpg");
+  const path = `resources/uploads/pasted-${Date.now()}.${extension}`;
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  await saveGithubFile(path, bytesToBase64(bytes), `Upload pasted image: ${file.name || path}`);
+  return `/my-blog/${path}`;
 }
 
 function downloadText(fileName, text) {
@@ -795,7 +1100,95 @@ if (els.downloadDraft && els.postForm) {
   });
 }
 
-loadSiteData().then(() => {
+if (els.githubLoginButton) {
+  els.githubLoginButton.addEventListener("click", async () => {
+    setWriterMessage(els.writerLoginMessage, "正在连接 GitHub...", "info");
+    try {
+      await verifyWriterToken(els.githubTokenInput.value);
+    } catch (error) {
+      updateWriterAuthView();
+      setWriterMessage(els.writerLoginMessage, error.message, "error");
+    }
+  });
+}
+
+if (els.githubLogoutButton) {
+  els.githubLogoutButton.addEventListener("click", () => {
+    writerState = { token: "", user: null, files: [], currentPath: "", currentSha: "" };
+    sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+    if (els.githubTokenInput) els.githubTokenInput.value = "";
+    updateWriterAuthView();
+    setWriterMessage(els.writerLoginMessage, "已退出写作台。", "info");
+    location.hash = "home";
+  });
+}
+
+if (els.writerPostSelect) {
+  els.writerPostSelect.addEventListener("change", async () => {
+    setWriterMessage(els.writerSaveMessage, "", "info");
+    try {
+      await loadWriterPost(els.writerPostSelect.value);
+    } catch (error) {
+      setWriterMessage(els.writerSaveMessage, error.message, "error");
+    }
+  });
+}
+
+[els.writerTitle, els.writerDate, els.writerCategory, els.writerTags, els.writerPdf, els.writerPdfTitle, els.writerContent]
+  .filter(Boolean)
+  .forEach((input) => input.addEventListener("input", renderWriterPreview));
+
+if (els.writerNewButton) {
+  els.writerNewButton.addEventListener("click", () => {
+    resetWriterForm();
+    setWriterMessage(els.writerSaveMessage, "已切换到新建文章。", "info");
+  });
+}
+
+if (els.writerSaveButton) {
+  els.writerSaveButton.addEventListener("click", async () => {
+    setWriterMessage(els.writerSaveMessage, "正在保存到 GitHub...", "info");
+    els.writerSaveButton.disabled = true;
+    try {
+      await saveWriterPost();
+    } catch (error) {
+      setWriterMessage(els.writerSaveMessage, error.message, "error");
+    } finally {
+      els.writerSaveButton.disabled = false;
+    }
+  });
+}
+
+if (els.writerContent) {
+  els.writerContent.addEventListener("paste", async (event) => {
+    const imageItem = [...(event.clipboardData?.items || [])].find((item) => item.type.startsWith("image/"));
+    if (!imageItem || writerState.user?.login !== GITHUB_OWNER) return;
+    event.preventDefault();
+    const file = imageItem.getAsFile();
+    if (!file) return;
+    setWriterMessage(els.writerSaveMessage, "正在上传粘贴的图片...", "info");
+    try {
+      const url = await uploadPastedImage(file);
+      insertAtTextarea(els.writerContent, `\n![粘贴图片](${url})\n`);
+      renderWriterPreview();
+      setWriterMessage(els.writerSaveMessage, "图片已上传并插入 Markdown。", "success");
+    } catch (error) {
+      setWriterMessage(els.writerSaveMessage, error.message, "error");
+    }
+  });
+}
+
+loadSiteData().then(async () => {
   renderAll();
+  if (writerState.token) {
+    try {
+      await verifyWriterToken(writerState.token, true);
+    } catch (error) {
+      writerState = { token: "", user: null, files: [], currentPath: "", currentSha: "" };
+      sessionStorage.removeItem(TOKEN_STORAGE_KEY);
+      setWriterMessage(els.writerLoginMessage, error.message, "error");
+      updateWriterAuthView();
+    }
+  }
   setRoute(location.hash.replace("#", ""));
 });
