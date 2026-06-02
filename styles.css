@@ -44,6 +44,38 @@ body[data-theme="rose"] {
   --shadow: 0 20px 52px rgba(153, 73, 115, 0.11);
 }
 
+body[data-theme="brownrose"] {
+  --bg: #fff7f2;
+  --surface: #fffdfb;
+  --surface-strong: #ffffff;
+  --ink: #3a2b2a;
+  --muted: #846f69;
+  --line: #ead8ce;
+  --accent: #a96f73;
+  --accent-ink: #ffffff;
+  --accent-soft: #f7e1dc;
+  --warn: #9a633c;
+  --shadow: 0 20px 52px rgba(117, 70, 61, 0.11);
+}
+
+body[data-theme="nightlibrary"] {
+  color-scheme: dark;
+  --bg: #0f1720;
+  --surface: #16202b;
+  --surface-strong: #1c2935;
+  --ink: #eef5f8;
+  --muted: #9fb1bd;
+  --line: #263848;
+  --accent: #7fb2d4;
+  --accent-ink: #07111a;
+  --accent-soft: #1d3443;
+  --warn: #d7b56d;
+  --shadow: 0 22px 56px rgba(2, 7, 12, 0.28);
+  background:
+    linear-gradient(180deg, rgba(127, 178, 212, 0.12), rgba(15, 23, 32, 0) 300px),
+    var(--bg);
+}
+
 body[data-theme="garden"] {
   --bg: #f8f7f1;
   --surface: #ffffff;
@@ -268,6 +300,20 @@ body[data-theme="garden"] .theme-strip h1 {
 body[data-theme="rose"] .theme-strip h1 {
   background:
     linear-gradient(112deg, #5c2342 0%, #c65b8a 42%, #eaa6c4 70%, #f2c66d 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+body[data-theme="brownrose"] .theme-strip h1 {
+  background:
+    linear-gradient(112deg, #49312e 0%, #a96f73 52%, #d4a55f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+body[data-theme="nightlibrary"] .theme-strip h1 {
+  background:
+    linear-gradient(112deg, #f0f7fb 0%, #7fb2d4 56%, #d7b56d 100%);
   -webkit-background-clip: text;
   background-clip: text;
 }

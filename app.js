@@ -91,7 +91,9 @@ async function loadSiteData() {
     state = {
       ...state,
       ...data,
-      theme: ["journal", "rose", "atelier", "garden"].includes(previewTheme) ? previewTheme : state.theme
+      theme: ["journal", "rose", "atelier", "garden", "brownrose", "nightlibrary"].includes(previewTheme)
+        ? previewTheme
+        : state.theme
     };
   } catch (error) {
     document.querySelector("main").insertAdjacentHTML(
