@@ -45,12 +45,27 @@ sexy, confident, intelligent.
 
 ## 等等先别走
 
-下面这位就是本博客的站长本人：
+> 下面这位就是本博客的站长本人：
+
+- 爱喝瑞幸咖啡和瑞幸咖啡的大猪头
+
+![粘贴图片](/my-blog/resources/uploads/pasted-1780475045545.png)
+
+- 被数学折磨但喜欢喝古茗的猪头
 
 
+![粘贴图片](/my-blog/resources/uploads/pasted-1780475100739.png)
+
+- 编程高手魅力女程序员猪猪
+
+![粘贴图片](/my-blog/resources/uploads/pasted-1780475171967.png)
+
+- 立志去南法度假的沙滩休闲猪
 
 
+![粘贴图片](/my-blog/resources/uploads/pasted-1780475214156.png)
 
+- 猪头的真实面貌：
 
 
 
