@@ -1,20 +1,32 @@
 {
   "items": [
     {
-      "goal": "完成个人介绍与头像",
-      "status": "doing"
+      "type": "checklist",
+      "goal": "论文阅读清单",
+      "status": "doing",
+      "progress": 58,
+      "detail": "TabPFN、TabICL 和表格基础模型按主题推进。"
     },
     {
-      "goal": "整理第一批 Markdown 文章",
-      "status": "doing"
+      "type": "metric",
+      "goal": "减肥目标",
+      "status": "doing",
+      "progress": 42,
+      "detail": "记录体重、围度和每周趋势，重点看长期曲线。"
     },
     {
-      "goal": "补充 PDF 与资源链接",
-      "status": "todo"
+      "type": "habit",
+      "goal": "运动习惯",
+      "status": "todo",
+      "progress": 18,
+      "detail": "先从每周三次开始，稳定比强度更重要。"
     },
     {
-      "goal": "选择最终浅色视觉方案并部署",
-      "status": "todo"
+      "type": "project",
+      "goal": "博客重构",
+      "status": "doing",
+      "progress": 66,
+      "detail": "把计划页、写作台和资源页整理成一个更完整的系统。"
     }
   ]
 }

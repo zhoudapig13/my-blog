@@ -55,6 +55,7 @@ const els = {
   blogFilters: document.querySelector("#blogFilters"),
   resourceList: document.querySelector("#resourceList"),
   planList: document.querySelector("#planList"),
+  planOwnerPanel: document.querySelector("#planOwnerPanel"),
   progressValue: document.querySelector("#progressValue"),
   writerNav: document.querySelector("#writerNav"),
   writerLoginPanel: document.querySelector("#writerLoginPanel"),
@@ -611,11 +612,38 @@ function renderFriends() {
       .join("") || '<div class="empty-state compact">还没有友链。</div>';
 }
 
+function planTypeMeta(plan, index) {
+  const type = plan.type || ["checklist", "metric", "habit", "project"][index % 4];
+  const meta = {
+    checklist: { label: "清单", className: "is-checklist", icon: "✓", color: "var(--plan-check)" },
+    metric: { label: "指标", className: "is-metric", icon: "%", color: "var(--plan-metric)" },
+    habit: { label: "习惯", className: "is-habit", icon: "•", color: "var(--plan-habit)" },
+    project: { label: "项目", className: "is-project", icon: "↗", color: "var(--plan-project)" }
+  };
+  return meta[type] || meta.checklist;
+}
+
+function planProgress(plan) {
+  if (Number.isFinite(Number(plan.progress))) return Math.max(0, Math.min(100, Number(plan.progress)));
+  if (Number.isFinite(Number(plan.current)) && Number.isFinite(Number(plan.target)) && Number(plan.target) > 0) {
+    return Math.max(0, Math.min(100, Math.round((Number(plan.current) / Number(plan.target)) * 100)));
+  }
+  if (plan.status === "done") return 100;
+  if (plan.status === "doing") return 56;
+  return 12;
+}
+
 function renderPlans() {
   const done = state.plans.filter((plan) => plan.status === "done").length;
+  const active = state.plans.filter((plan) => plan.status === "doing").length;
   const progress = state.plans.length ? Math.round((done / state.plans.length) * 100) : 0;
-  els.progressValue.textContent = `${progress}%`;
-  document.querySelector(".progress-ring").style.setProperty("--progress", `${progress}%`);
+  if (els.progressValue) els.progressValue.textContent = `${progress}%`;
+  document.querySelector(".progress-ring")?.style.setProperty("--progress", `${progress}%`);
+
+  const heroTitle = document.querySelector("#planView .progress-panel h3");
+  const heroCopy = document.querySelector("#planView .progress-panel p");
+  if (heroTitle) heroTitle.textContent = `今天有 ${active} 个计划正在推进`;
+  if (heroCopy) heroCopy.textContent = "清单、指标、习惯和长期项目会以不同形态展示；切换主题时，计划卡片会跟着当前色彩系统变化。";
 
   const statusLabel = {
     todo: "未开始",
@@ -625,19 +653,29 @@ function renderPlans() {
 
   els.planList.innerHTML =
     state.plans
-      .map(
-        (plan) => `
-          <article class="plan-item">
-            <div>
-              <strong>${escapeHtml(plan.goal)}</strong>
+      .map((plan, index) => {
+        const meta = planTypeMeta(plan, index);
+        const itemProgress = planProgress(plan);
+        const detail = plan.detail || plan.note || plan.description || "下一步还在酝酿中";
+        return `
+          <article class="plan-item ${meta.className}" style="--item-progress: ${itemProgress}%; --item-color: ${meta.color}">
+            <div class="plan-item-main">
+              <span class="plan-type-badge"><b>${meta.icon}</b>${meta.label}</span>
+              <strong>${escapeHtml(plan.goal || plan.title || "未命名计划")}</strong>
+              <p>${escapeHtml(detail)}</p>
+            </div>
+            <div class="plan-card-visual" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </div>
+            <div class="plan-item-footer">
               <span class="status">${statusLabel[plan.status] || "未开始"}</span>
+              <span>${itemProgress}%</span>
             </div>
           </article>
-        `
-      )
-      .join("") || '<div class="empty-state">还没有计划。去 GitHub CMS 添加一个目标，进度会自动更新。</div>';
+        `;
+      })
+      .join("") || '<div class="empty-state">还没有计划。站主登录后可以新建第一个目标。</div>';
 }
-
 function renderPreview() {
   if (!els.postForm || !els.livePreview) return;
   const form = els.postForm;
@@ -818,6 +856,7 @@ async function githubRequest(path, options = {}) {
 function updateWriterAuthView() {
   const isOwner = writerState.user?.login === GITHUB_OWNER;
   if (els.writerNav) els.writerNav.hidden = !isOwner;
+  if (els.planOwnerPanel) els.planOwnerPanel.hidden = !isOwner;
   if (els.writerLoginPanel) els.writerLoginPanel.hidden = Boolean(isOwner);
   if (els.writerStudio) els.writerStudio.hidden = !isOwner;
   if (els.writerAuthStatus) {

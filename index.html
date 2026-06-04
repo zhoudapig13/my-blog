@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Woman's World</title>
-    <link rel="stylesheet" href="styles.css?v=20260602-themes1" />
+    <link rel="stylesheet" href="styles.css?v=20260604-plans1" />
     <script>
       window.MathJax = {
         tex: {
@@ -176,12 +176,12 @@
               <p>根据计划条目的状态自动计算。计划数据由 GitHub 仓库中的 JSON 文件驱动。</p>
             </div>
           </section>
-          <section class="editor-panel">
+          <section id="planOwnerPanel" class="editor-panel" hidden>
             <h3>计划数据</h3>
             <p>
               计划来自 <code>data/plans.json</code>。在后台编辑状态后，GitHub Actions 会重新生成进度。
             </p>
-            <a class="button-link" href="admin/" target="_blank" rel="noreferrer">编辑计划</a>
+            <a class="button-link" href="admin/" target="_blank" rel="noreferrer">新建 / 编辑计划</a>
           </section>
           <div id="planList" class="plan-list"></div>
         </div>
@@ -290,6 +290,6 @@
     </template>
 
     <script src="comments-config.js?v=20260601-reader2"></script>
-    <script src="app.js?v=20260602-themes1"></script>
+    <script src="app.js?v=20260604-plans1"></script>
   </body>
 </html>
