@@ -868,6 +868,43 @@ body[data-theme="nightlibrary"] .theme-strip h1 {
   box-shadow: none;
 }
 
+.markdown-table-scroll {
+  width: 100%;
+  margin: 18px 0;
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-strong);
+}
+
+.markdown-table-scroll table {
+  width: 100%;
+  min-width: 520px;
+  border-collapse: collapse;
+}
+
+.markdown-table-scroll th,
+.markdown-table-scroll td {
+  border-bottom: 1px solid var(--line);
+  padding: 11px 13px;
+  vertical-align: top;
+  line-height: 1.6;
+}
+
+.markdown-table-scroll th {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--accent-soft) 62%, var(--surface));
+  font-weight: 850;
+}
+
+.markdown-table-scroll tr:last-child td {
+  border-bottom: 0;
+}
+
+.markdown-table-scroll tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--accent-soft) 22%, transparent);
+}
+
 .resource-list,
 .plan-list,
 .friend-list {

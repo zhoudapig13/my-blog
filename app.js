@@ -179,7 +179,8 @@ function markdownToHtml(markdown) {
     }
   };
 
-  for (const rawLine of lines) {
+  for (let lineIndex = 0; lineIndex < lines.length; lineIndex += 1) {
+    const rawLine = lines[lineIndex];
     const line = rawLine.trim();
 
     if (!line) {
@@ -190,6 +191,27 @@ function markdownToHtml(markdown) {
     if (line.startsWith("@@BLOCK")) {
       closeList();
       html.push(line);
+      continue;
+    }
+
+    if (isMarkdownTableRow(line) && isMarkdownTableSeparator(lines[lineIndex + 1]?.trim() || "")) {
+      closeList();
+      const headers = splitMarkdownTableRow(line);
+      const alignments = splitMarkdownTableRow(lines[lineIndex + 1].trim()).map((cell) => {
+        const left = cell.startsWith(":");
+        const right = cell.endsWith(":");
+        if (left && right) return "center";
+        if (right) return "right";
+        return "left";
+      });
+      const rows = [];
+      lineIndex += 2;
+      while (lineIndex < lines.length && isMarkdownTableRow(lines[lineIndex].trim())) {
+        rows.push(splitMarkdownTableRow(lines[lineIndex].trim()));
+        lineIndex += 1;
+      }
+      lineIndex -= 1;
+      html.push(renderMarkdownTable(headers, alignments, rows));
       continue;
     }
 
@@ -240,6 +262,43 @@ function markdownToHtml(markdown) {
   closeList();
 
   return html.join("\n").replace(/@@BLOCK(\d+)@@/g, (_, index) => blocks[Number(index)]);
+}
+
+function isMarkdownTableRow(line) {
+  return line.includes("|") && splitMarkdownTableRow(line).length > 1;
+}
+
+function isMarkdownTableSeparator(line) {
+  const cells = splitMarkdownTableRow(line);
+  return cells.length > 1 && cells.every((cell) => /^:?-{3,}:?$/.test(cell.trim()));
+}
+
+function splitMarkdownTableRow(line) {
+  const trimmed = String(line || "").trim();
+  const withoutEdges = trimmed.replace(/^\|/, "").replace(/\|$/, "");
+  return withoutEdges.split("|").map((cell) => cell.trim());
+}
+
+function renderMarkdownTable(headers, alignments, rows) {
+  const alignAttr = (index) => ` style="text-align: ${alignments[index] || "left"}"`;
+  const headerHtml = headers
+    .map((header, index) => `<th${alignAttr(index)}>${inlineMarkdown(header)}</th>`)
+    .join("");
+  const rowsHtml = rows
+    .map((row) => {
+      const cells = headers.map((_, index) => row[index] || "");
+      return `<tr>${cells.map((cell, index) => `<td${alignAttr(index)}>${inlineMarkdown(cell)}</td>`).join("")}</tr>`;
+    })
+    .join("");
+
+  return `
+    <div class="markdown-table-scroll">
+      <table>
+        <thead><tr>${headerHtml}</tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+  `;
 }
 
 function inlineMarkdown(value) {
