@@ -22,7 +22,8 @@ function parseFrontmatter(source, fileName) {
         category: "未分类",
         tags: [],
         date: new Date().toISOString().slice(0, 10),
-        pdf: ""
+        pdf: "",
+        summary: ""
       },
       content: source
     };
@@ -79,8 +80,9 @@ function loadMarkdownCollection(collectionDir) {
         date: meta.date || new Date().toISOString().slice(0, 10),
         pdf: meta.pdf || "",
         pdfTitle: meta.pdfTitle || "",
+        summary: Array.isArray(meta.summary) ? meta.summary[0] || "" : meta.summary || "",
         content,
-        excerpt: excerpt(content)
+        excerpt: (Array.isArray(meta.summary) ? meta.summary[0] : meta.summary) || excerpt(content)
       };
     })
     .sort((a, b) => b.date.localeCompare(a.date));

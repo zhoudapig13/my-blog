@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Woman's World</title>
-    <link rel="stylesheet" href="styles.css?v=20260729-resource-preview2" />
+    <link rel="stylesheet" href="styles.css?v=20260729-writer-summary3" />
     <script>
       window.MathJax = {
         tex: {
@@ -264,10 +264,30 @@
           </section>
 
           <section class="preview-panel markdown-preview-panel">
-            <div class="section-heading">
+            <section class="writer-summary-panel" aria-labelledby="writerSummaryHeading">
+              <div class="writer-summary-heading">
+                <div>
+                  <p class="eyebrow">Homepage Summary</p>
+                  <h2 id="writerSummaryHeading">首页摘要</h2>
+                </div>
+                <span id="writerSummaryCount">0 / 180</span>
+              </div>
+              <label for="writerSummary">用于首页和文章列表显示</label>
+              <textarea
+                id="writerSummary"
+                rows="4"
+                maxlength="180"
+                placeholder="用一两句话说明这篇文章讲了什么。未填写时会自动截取正文。"
+              ></textarea>
+              <div class="writer-summary-card">
+                <span>首页卡片预览</span>
+                <p id="writerSummaryPreview">摘要会显示在这里。</p>
+              </div>
+            </section>
+            <div class="section-heading writer-preview-heading">
               <div>
                 <p class="eyebrow">Preview</p>
-                <h2>右侧预览</h2>
+                <h2>正文预览</h2>
               </div>
               <span id="writerCurrentPath">未保存</span>
             </div>
@@ -311,6 +331,6 @@
     </template>
 
     <script src="comments-config.js?v=20260601-reader2"></script>
-    <script src="app.js?v=20260729-resource-preview2"></script>
+    <script src="app.js?v=20260729-writer-summary3"></script>
   </body>
 </html>

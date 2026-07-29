@@ -23,6 +23,7 @@ collections:
       - { label: "分类", name: "category", widget: "string", default: "未分类" }
       - { label: "标签", name: "tags", widget: "list", required: false }
       - { label: "日期", name: "date", widget: "datetime", format: "YYYY-MM-DD", date_format: "YYYY-MM-DD", time_format: false }
+      - { label: "首页摘要", name: "summary", widget: "string", required: false, hint: "用于首页和文章列表显示；留空时自动截取正文。" }
       - { label: "PDF 链接", name: "pdf", widget: "string", required: false }
       - { label: "PDF 显示名称", name: "pdfTitle", widget: "string", required: false }
       - { label: "正文", name: "body", widget: "markdown" }

@@ -79,6 +79,9 @@ const els = {
   writerTags: document.querySelector("#writerTags"),
   writerPdf: document.querySelector("#writerPdf"),
   writerPdfTitle: document.querySelector("#writerPdfTitle"),
+  writerSummary: document.querySelector("#writerSummary"),
+  writerSummaryCount: document.querySelector("#writerSummaryCount"),
+  writerSummaryPreview: document.querySelector("#writerSummaryPreview"),
   writerContent: document.querySelector("#writerContent"),
   writerPreview: document.querySelector("#writerPreview"),
   writerCurrentPath: document.querySelector("#writerCurrentPath"),
@@ -920,7 +923,8 @@ function parseMarkdownFile(source, fallbackTitle = "") {
         tags: [],
         date: new Date().toISOString().slice(0, 10),
         pdf: "",
-        pdfTitle: ""
+        pdfTitle: "",
+        summary: ""
       },
       content: String(source || "")
     };
@@ -950,7 +954,8 @@ function parseMarkdownFile(source, fallbackTitle = "") {
       tags: Array.isArray(meta.tags) ? meta.tags : [],
       date: meta.date || new Date().toISOString().slice(0, 10),
       pdf: meta.pdf || "",
-      pdfTitle: meta.pdfTitle || ""
+      pdfTitle: meta.pdfTitle || "",
+      summary: Array.isArray(meta.summary) ? meta.summary[0] || "" : meta.summary || ""
     },
     content: match[2].trim()
   };
@@ -966,9 +971,10 @@ function buildWriterMarkdown() {
   const date = els.writerDate.value || new Date().toISOString().slice(0, 10);
   const pdf = els.writerPdf.value.trim();
   const pdfTitle = els.writerPdfTitle.value.trim();
+  const summary = els.writerSummary.value.trim().replace(/\s+/g, " ");
   const content = els.writerContent.value.trim() || `# ${title}\n\n正文待补充。`;
 
-  return `---\ntitle: "${escapeYaml(title)}"\ncategory: "${escapeYaml(category)}"\ntags:\n${tags.map((tag) => `  - "${escapeYaml(tag)}"`).join("\n") || "  []"}\ndate: "${escapeYaml(date)}"\npdf: "${escapeYaml(pdf)}"\npdfTitle: "${escapeYaml(pdfTitle)}"\n---\n\n${content}\n`;
+  return `---\ntitle: "${escapeYaml(title)}"\ncategory: "${escapeYaml(category)}"\ntags:\n${tags.map((tag) => `  - "${escapeYaml(tag)}"`).join("\n") || "  []"}\ndate: "${escapeYaml(date)}"\nsummary: "${escapeYaml(summary)}"\npdf: "${escapeYaml(pdf)}"\npdfTitle: "${escapeYaml(pdfTitle)}"\n---\n\n${content}\n`;
 }
 
 function setWriterMessage(target, message, type = "info") {
@@ -1028,6 +1034,7 @@ function resetWriterForm() {
   if (els.writerTags) els.writerTags.value = "";
   if (els.writerPdf) els.writerPdf.value = "";
   if (els.writerPdfTitle) els.writerPdfTitle.value = "";
+  if (els.writerSummary) els.writerSummary.value = "";
   if (els.writerContent) els.writerContent.value = "";
   renderWriterPreview();
 }
@@ -1042,6 +1049,7 @@ function fillWriterForm(markdown, file) {
   els.writerTags.value = parsed.meta.tags.join(", ");
   els.writerPdf.value = parsed.meta.pdf;
   els.writerPdfTitle.value = parsed.meta.pdfTitle;
+  els.writerSummary.value = parsed.meta.summary;
   els.writerContent.value = parsed.content;
   els.writerCurrentPath.textContent = writerState.currentPath || "新建文章";
   renderWriterPreview();
@@ -1054,7 +1062,11 @@ function renderWriterPreview() {
   const category = els.writerCategory?.value?.trim() || "未分类";
   const pdf = els.writerPdf?.value?.trim();
   const pdfTitle = els.writerPdfTitle?.value?.trim();
+  const summary = els.writerSummary?.value?.trim() || "";
   const content = els.writerContent?.value || "";
+  const summaryFallback = excerpt(content, 180) || "摘要会显示在这里。";
+  if (els.writerSummaryCount) els.writerSummaryCount.textContent = `${summary.length} / 180`;
+  if (els.writerSummaryPreview) els.writerSummaryPreview.textContent = summary || summaryFallback;
   els.writerPreview.innerHTML = `
     <p class="eyebrow">${escapeHtml(category)} / ${escapeHtml(date)}</p>
     <h1 class="reader-title">${escapeHtml(title)}</h1>
@@ -1346,7 +1358,7 @@ if (els.writerPostSelect) {
   });
 }
 
-[els.writerTitle, els.writerDate, els.writerCategory, els.writerTags, els.writerPdf, els.writerPdfTitle, els.writerContent]
+[els.writerTitle, els.writerDate, els.writerCategory, els.writerTags, els.writerPdf, els.writerPdfTitle, els.writerSummary, els.writerContent]
   .filter(Boolean)
   .forEach((input) => input.addEventListener("input", renderWriterPreview));
 
