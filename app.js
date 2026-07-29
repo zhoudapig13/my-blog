@@ -1096,15 +1096,27 @@ async function verifyWriterToken(token, silent = false) {
 async function loadWriterPosts() {
   if (!els.writerPostSelect || writerState.user?.login !== GITHUB_OWNER) return;
   const files = await githubRequest(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/content/posts?ref=${GITHUB_BRANCH}`);
-  writerState.files = files
+  const markdownFiles = files
     .filter((file) => file.type === "file" && file.name.endsWith(".md"))
     .sort((a, b) => a.name.localeCompare(b.name));
+
+  writerState.files = await Promise.all(markdownFiles.map(async (file) => {
+    const fallbackTitle = file.name.replace(/\.md$/i, "");
+    try {
+      const detail = await githubRequest(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(file.path).replaceAll("%2F", "/")}?ref=${GITHUB_BRANCH}`);
+      const markdown = base64ToText(detail.content || "");
+      const title = parseMarkdownFile(markdown, fallbackTitle).meta.title.trim() || fallbackTitle;
+      return { ...file, ...detail, markdown, displayTitle: title };
+    } catch {
+      return { ...file, displayTitle: fallbackTitle };
+    }
+  }));
 
   els.writerPostSelect.innerHTML = '<option value="">新建文章</option>';
   writerState.files.forEach((file) => {
     const option = document.createElement("option");
     option.value = file.path;
-    option.textContent = file.name.replace(/\.md$/i, "");
+    option.textContent = file.displayTitle;
     els.writerPostSelect.append(option);
   });
 }
@@ -1112,6 +1124,11 @@ async function loadWriterPosts() {
 async function loadWriterPost(path) {
   if (!path) {
     resetWriterForm();
+    return;
+  }
+  const cachedFile = writerState.files.find((file) => file.path === path);
+  if (cachedFile?.markdown) {
+    fillWriterForm(cachedFile.markdown, cachedFile);
     return;
   }
   const file = await githubRequest(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${encodeURIComponent(path).replaceAll("%2F", "/")}?ref=${GITHUB_BRANCH}`);
