@@ -8,26 +8,28 @@
     {
       "title": "Tabular Foundation Models",
       "slug": "tabular-foundation-models",
-      "description": "围绕 TabPFN、TabICL 与表格上下文学习整理的论文、笔记、演示文稿和代码资源。",
-      "content": "## 从这里开始\n\n这个栏目用于建立 **Tabular Foundation Models** 的学习地图。建议先理解 TabPFN 如何用预训练近似贝叶斯推断，再比较 TabPFN v2 与 TabICL 在表示方式、上下文长度和可扩展性上的差异。\n\n## 论文清单\n\n- [TabPFN: A Transformer That Solves Small Tabular Classification Problems in a Second](https://arxiv.org/abs/2207.01848) — TabPFN 的起点\n- [Accurate predictions on small data with a tabular foundation model](https://www.nature.com/articles/s41586-024-08328-6) — TabPFN v2 / Nature 论文\n- [TabICL: A Tabular Foundation Model for In-Context Learning on Large Data](https://arxiv.org/abs/2502.05564) — 面向大规模数据的表格 ICL\n\n## 阅读提示\n\n阅读时可以重点记录三个问题：模型的预训练先验来自哪里？新表格如何被编码为上下文？随着样本数和特征数增加，计算成本如何变化？",
+      "description": "TabPFN、TabICL 及表格上下文学习的论文、实验与教程资源。",
+      "content": "## 论文清单\n\n- [0. Accurate Predictions on Small Data with a Tabular Foundation Model (TabPFN v2)](https://www.nature.com/articles/s41586-024-08328-6)\n- [1. A Closer Look at TabPFN v2: Strength, Limitation, and Extension](https://arxiv.org/abs/2502.17361)\n- [2. TabICL: A Tabular Foundation Model for In-Context Learning on Large Data](https://arxiv.org/abs/2502.05564)\n- [3. TabDPT: Scaling Tabular Foundation Models on Real Data](https://arxiv.org/abs/2410.18164)\n- [4. Retrieval & Fine-Tuning for In-Context Tabular Models](https://arxiv.org/abs/2406.05207)\n- [5. TabPFGen - Tabular Data Generation with TabPFN](https://arxiv.org/abs/2406.05216)\n- [6. MotherNet: Fast Training and Inference via Hyper-Network Transformers](https://openreview.net/forum?id=6H4jRWKFc3)\n- [7. TuneTables: Context Optimization for Scalable Prior-Data Fitted Networks](https://arxiv.org/abs/2402.11137)\n- [8. ModernNCA: Modern Neighborhood Components Analysis](https://arxiv.org/abs/2407.03257)\n- [9. CARTE: Pretraining and Transfer for Tabular Learning](https://arxiv.org/abs/2402.16785)\n- [10. Improving TabPFN's Synthetic Data Generation by Integrating Causal Structure](https://arxiv.org/abs/2603.10254)\n- [11. FairPFN: A Tabular Foundation Model for Causal Fairness](https://arxiv.org/abs/2506.07049)\n- [12. Do-PFN: In-Context Learning for Causal Effect Estimation](https://arxiv.org/abs/2506.06039)\n- [13. When Tabular Foundation Models Meet Strategic Tabular Data: A Prior Alignment Approach](https://arxiv.org/abs/2605.19662)\n- [14. Drift-Resilient TabPFN: In-Context Learning Temporal Distribution Shifts on Tabular Data](https://arxiv.org/abs/2411.10634)\n- [15. Using Maximal Information Auxiliary Variables to Improve Synthetic Data Generation](https://openreview.net/forum?id=6PkiUAcTWF)\n- [16. TabFlex: Scaling Tabular Learning to Millions with Linear Attention](https://arxiv.org/abs/2506.05584)\n- [17. CausalPFN: Amortized Causal Effect Estimation via In-Context Learning](https://arxiv.org/abs/2506.07918)\n- [18. Mitigating Label Shift in Tabular In-Context Learning via Test-Time Posterior Adjustment](https://arxiv.org/abs/2605.04363)\n\n## 栏目说明\n\n这份清单覆盖表格基础模型的核心路线：预训练先验、上下文优化、真实数据扩展、生成建模、分布偏移与因果推断。点击论文标题可进入原文页面；右侧资源区收录本人的改进代码、教程和实验数据记录。",
       "items": [
         {
-          "title": "TabPFN 阅读清单",
-          "type": "PDF",
-          "url": "resources/tabpfn-reading-list.pdf",
-          "description": "本地 PDF 文档，可直接打开或下载阅读。"
-        },
-        {
-          "title": "TabPFN 官方代码仓库",
+          "title": "TabICL Experiments",
           "type": "代码",
-          "url": "https://github.com/PriorLabs/TabPFN",
-          "description": "模型安装、推理示例与最新代码。"
+          "url": "https://github.com/zhoudapig13/tabicl-experiments",
+          "description": "我对 TabICL 的改进实现、实验代码与结果记录。"
         },
         {
-          "title": "Tabular FM 分享幻灯片",
+          "title": "教程：Context Ensemble for Tabular Foundation Models",
           "type": "PPT",
-          "url": "",
-          "description": "预留给课程汇报或论文分享的 PPT 文件。"
+          "url": "resources/tabular-foundation-models/context-ensemble-for-tabular-foundation-models.pptx",
+          "previewUrl": "resources/tabular-foundation-models/context-ensemble-for-tabular-foundation-models-preview.pdf",
+          "description": "Context ensemble 方法、可靠性权重与实验设计，共 27 页。"
+        },
+        {
+          "title": "Experiment 11 数据记录",
+          "type": "PDF",
+          "url": "resources/tabular-foundation-models/experiment-11-data-records.pdf",
+          "previewUrl": "resources/tabular-foundation-models/experiment-11-data-records.pdf",
+          "description": "Context CC18 / CTR23 实验结果与汇总表，共 10 页。"
         }
       ]
     }

@@ -54,6 +54,13 @@ const els = {
   friendCount: document.querySelector("#friendCount"),
   blogFilters: document.querySelector("#blogFilters"),
   resourceList: document.querySelector("#resourceList"),
+  resourcePreviewDialog: document.querySelector("#resourcePreviewDialog"),
+  resourcePreviewTitle: document.querySelector("#resourcePreviewTitle"),
+  resourcePreviewMeta: document.querySelector("#resourcePreviewMeta"),
+  resourcePreviewFrame: document.querySelector("#resourcePreviewFrame"),
+  resourcePreviewDownload: document.querySelector("#resourcePreviewDownload"),
+  resourcePreviewOpen: document.querySelector("#resourcePreviewOpen"),
+  resourcePreviewClose: document.querySelector("#resourcePreviewClose"),
   planList: document.querySelector("#planList"),
   planOwnerPanel: document.querySelector("#planOwnerPanel"),
   progressValue: document.querySelector("#progressValue"),
@@ -631,7 +638,7 @@ function renderResources() {
       collection.title,
       collection.description,
       collection.content,
-      ...(collection.items || []).flatMap((item) => [item.title, item.type, item.url, item.description])
+      ...(collection.items || []).flatMap((item) => [item.title, item.type, item.url, item.previewUrl, item.description])
     ]
       .join(" ")
       .toLowerCase();
@@ -644,34 +651,54 @@ function renderResources() {
         (collection, index) => {
           const items = collection.items || [];
           const files = items
-            .map(
-              (item) => `
+            .map((item) => {
+              const previewUrl = item.previewUrl || (item.type === "PDF" ? item.url : "");
+              const itemTitle = item.title || "未命名资源";
+              const actions = previewUrl
+                ? `
+                  <div class="resource-file-actions">
+                    <button
+                      class="resource-preview-button"
+                      type="button"
+                      data-resource-preview
+                      data-preview-url="${escapeHtml(previewUrl)}"
+                      data-download-url="${escapeHtml(item.url || previewUrl)}"
+                      data-preview-title="${escapeHtml(itemTitle)}"
+                      data-preview-meta="${escapeHtml(item.description || item.type || "资源文件")}"
+                    >预览</button>
+                    <a class="resource-download-link" href="${escapeHtml(item.url || previewUrl)}" download>下载</a>
+                  </div>
+                `
+                : item.url
+                  ? `<a class="resource-open-link" href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">访问 <span aria-hidden="true">↗</span></a>`
+                  : '<span class="resource-pending">待补充</span>';
+
+              return `
                 <article class="resource-file">
                   <span class="resource-file-type">${escapeHtml(item.type || "链接")}</span>
                   <div class="resource-file-copy">
-                    <h4>${escapeHtml(item.title || "未命名资源")}</h4>
+                    <h4>${escapeHtml(itemTitle)}</h4>
                     <p>${escapeHtml(item.description || "暂无说明")}</p>
                   </div>
-                  ${
-                    item.url
-                      ? `<a class="resource-open-link" href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer" aria-label="打开 ${escapeHtml(item.title || "资源")}">打开 <span aria-hidden="true">↗</span></a>`
-                      : '<span class="resource-pending">待补充</span>'
-                  }
+                  ${actions}
                 </article>
-              `
-            )
+              `;
+            })
             .join("");
 
           return `
-          <article class="resource-collection" id="resource-${escapeHtml(collection.slug || slugify(collection.title || `collection-${index + 1}`))}">
-            <header class="resource-collection-head">
+          <details class="resource-collection" id="resource-${escapeHtml(collection.slug || slugify(collection.title || `collection-${index + 1}`))}" ${term ? "open" : ""}>
+            <summary class="resource-collection-summary">
               <div>
                 <p class="resource-index">专题 ${String(index + 1).padStart(2, "0")}</p>
                 <h3>${escapeHtml(collection.title || "未命名栏目")}</h3>
                 <p>${escapeHtml(collection.description || "这里可以添加栏目简介。")}</p>
               </div>
-              <span class="resource-count">${items.length} 项文件</span>
-            </header>
+              <div class="resource-summary-meta">
+                <span class="resource-count">${items.length} 项资源</span>
+                <span class="resource-expand-label">展开详情 <b aria-hidden="true">⌄</b></span>
+              </div>
+            </summary>
             <div class="resource-collection-body">
               <section class="resource-markdown reader">
                 ${markdownToHtml(collection.content || "## 栏目导读\n\n在后台使用 Markdown 添加论文清单、学习路线或内容说明。")}
@@ -684,13 +711,33 @@ function renderResources() {
                 ${files || '<div class="empty-state compact">这个栏目还没有添加文件。</div>'}
               </section>
             </div>
-          </article>
+          </details>
         `;
         }
       )
       .join("") || '<div class="empty-state">没有匹配的资源栏目。</div>';
 
   typesetMath(els.resourceList);
+}
+
+function closeResourcePreview() {
+  if (!els.resourcePreviewDialog) return;
+  els.resourcePreviewDialog.close();
+  els.resourcePreviewFrame.removeAttribute("src");
+}
+
+function openResourcePreview(button) {
+  if (!els.resourcePreviewDialog) return;
+  const previewUrl = button.dataset.previewUrl;
+  const downloadUrl = button.dataset.downloadUrl || previewUrl;
+  if (!previewUrl) return;
+
+  els.resourcePreviewTitle.textContent = button.dataset.previewTitle || "资源预览";
+  els.resourcePreviewMeta.textContent = button.dataset.previewMeta || "";
+  els.resourcePreviewFrame.src = previewUrl;
+  els.resourcePreviewDownload.href = downloadUrl;
+  els.resourcePreviewOpen.href = previewUrl;
+  els.resourcePreviewDialog.showModal();
 }
 
 function renderFriends() {
@@ -1215,6 +1262,26 @@ els.search.addEventListener("keydown", (event) => {
   renderTaxonomy();
   renderPosts();
 });
+
+if (els.resourceList) {
+  els.resourceList.addEventListener("click", (event) => {
+    const previewButton = event.target.closest("[data-resource-preview]");
+    if (previewButton) openResourcePreview(previewButton);
+  });
+}
+
+if (els.resourcePreviewClose) {
+  els.resourcePreviewClose.addEventListener("click", closeResourcePreview);
+}
+
+if (els.resourcePreviewDialog) {
+  els.resourcePreviewDialog.addEventListener("close", () => {
+    els.resourcePreviewFrame.removeAttribute("src");
+  });
+  els.resourcePreviewDialog.addEventListener("click", (event) => {
+    if (event.target === els.resourcePreviewDialog) closeResourcePreview();
+  });
+}
 
 if (els.markdownFile && els.postForm) {
   els.markdownFile.addEventListener("change", async (event) => {

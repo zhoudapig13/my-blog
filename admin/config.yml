@@ -76,6 +76,7 @@ collections:
                   - { label: "资源名称", name: "title", widget: "string" }
                   - { label: "类型", name: "type", widget: "select", options: ["PDF", "PPT", "代码", "数据集", "网页", "视频", "其他"] }
                   - { label: "链接或文件路径", name: "url", widget: "string", required: false, hint: "支持 resources/ 下的本地文件路径或 https:// 外部链接。" }
+                  - { label: "预览地址", name: "previewUrl", widget: "string", required: false, hint: "PDF 可直接填写自身路径；PPT 可填写对应的 PDF 预览版路径。" }
                   - { label: "一句话说明", name: "description", widget: "text", required: false }
 
       - name: "friends"
