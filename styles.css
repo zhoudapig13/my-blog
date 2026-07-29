@@ -663,11 +663,32 @@ body[data-theme="nightlibrary"] .theme-strip h1 {
 }
 
 .reader pre {
+  position: relative;
   overflow: auto;
   border-radius: var(--radius);
-  padding: 16px;
+  padding: 44px 18px 18px;
+  border: 1px solid #343b44;
   background: #20252a;
-  color: #f5f1e8;
+  color: #e6edf3;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%);
+}
+
+.reader pre.code-block::before {
+  content: attr(data-language);
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 30px;
+  padding: 0 14px;
+  border-bottom: 1px solid #343b44;
+  background: #292f36;
+  color: #9da7b3;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 30px;
+  letter-spacing: 0.12em;
 }
 
 .reader code {
@@ -677,8 +698,50 @@ body[data-theme="nightlibrary"] .theme-strip h1 {
 }
 
 .reader pre code {
+  display: block;
   padding: 0;
   background: transparent;
+  color: inherit;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  font-size: 0.92em;
+  line-height: 1.72;
+  tab-size: 4;
+}
+
+.syntax-keyword {
+  color: #ff7ab2;
+  font-weight: 650;
+}
+
+.syntax-builtin {
+  color: #82d2ff;
+}
+
+.syntax-function {
+  color: #d2a8ff;
+  font-weight: 650;
+}
+
+.syntax-string {
+  color: #a8db8f;
+}
+
+.syntax-comment {
+  color: #8b949e;
+  font-style: italic;
+}
+
+.syntax-number,
+.syntax-constant {
+  color: #f6c177;
+}
+
+.syntax-decorator {
+  color: #7ee787;
+}
+
+.syntax-operator {
+  color: #79c0ff;
 }
 
 .reader img {

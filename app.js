@@ -13,6 +13,9 @@ const GITHUB_OWNER = "zhoudapig13";
 const GITHUB_REPO = "my-blog";
 const GITHUB_BRANCH = "main";
 const TOKEN_STORAGE_KEY = "my-blog.github-token";
+const POST_REDIRECTS = {
+  "未命名文章": "llm-loss-optimizers-gradients"
+};
 const previewTheme = new URLSearchParams(location.search).get("theme");
 let activeFilter = FILTER_ALL;
 let writerState = {
@@ -163,9 +166,9 @@ function markdownToHtml(markdown) {
 
   text = text.replace(/^---\n[\s\S]*?\n---\n?/, "");
 
-  text = text.replace(/```([\s\S]*?)```/g, (_, code) => {
+  text = text.replace(/```([^\n`]*)\n([\s\S]*?)```/g, (_, language, code) => {
     const token = `@@BLOCK${blocks.length}@@`;
-    blocks.push(`<pre><code>${escapeHtml(code.trim())}</code></pre>`);
+    blocks.push(renderCodeBlock(code, language));
     return token;
   });
 
@@ -323,6 +326,118 @@ function inlineMarkdown(value) {
 
 function cleanMath(value) {
   return String(value).trim().replace(/\\([*_])/g, "$1");
+}
+
+const PYTHON_KEYWORDS = new Set([
+  "and", "as", "assert", "async", "await", "break", "case", "class", "continue",
+  "def", "del", "elif", "else", "except", "finally", "for", "from", "global",
+  "if", "import", "in", "is", "lambda", "match", "nonlocal", "not", "or",
+  "pass", "raise", "return", "try", "while", "with", "yield"
+]);
+
+const PYTHON_BUILTINS = new Set([
+  "abs", "all", "any", "bool", "bytes", "callable", "dict", "enumerate", "filter",
+  "float", "format", "frozenset", "getattr", "hasattr", "hash", "help", "hex",
+  "id", "input", "int", "isinstance", "issubclass", "iter", "len", "list", "map",
+  "max", "min", "next", "object", "open", "ord", "pow", "print", "property",
+  "range", "repr", "reversed", "round", "set", "slice", "sorted", "str", "sum",
+  "super", "tuple", "type", "vars", "zip"
+]);
+
+function highlightPython(source) {
+  const code = String(source || "");
+  let html = "";
+  let index = 0;
+  let expectDefinition = false;
+  const token = (className, value) => `<span class="syntax-${className}">${escapeHtml(value)}</span>`;
+
+  while (index < code.length) {
+    const rest = code.slice(index);
+
+    if (rest[0] === "#") {
+      const end = code.indexOf("\n", index);
+      const stop = end === -1 ? code.length : end;
+      html += token("comment", code.slice(index, stop));
+      index = stop;
+      continue;
+    }
+
+    if (rest.startsWith('"""') || rest.startsWith("'''") || rest[0] === '"' || rest[0] === "'") {
+      const delimiter = rest.startsWith('"""') || rest.startsWith("'''") ? rest.slice(0, 3) : rest[0];
+      let end = index + delimiter.length;
+      while (end < code.length) {
+        if (code.startsWith(delimiter, end)) {
+          end += delimiter.length;
+          break;
+        }
+        if (code[end] === "\\") end += 1;
+        end += 1;
+      }
+      html += token("string", code.slice(index, end));
+      index = end;
+      expectDefinition = false;
+      continue;
+    }
+
+    const decorator = rest.match(/^@[A-Za-z_][\w.]*/);
+    if (decorator) {
+      html += token("decorator", decorator[0]);
+      index += decorator[0].length;
+      continue;
+    }
+
+    const number = rest.match(/^(?:0[xob][\da-f_]+|\d[\d_]*(?:\.\d[\d_]*)?(?:e[+-]?\d[\d_]*)?)/i);
+    if (number) {
+      html += token("number", number[0]);
+      index += number[0].length;
+      expectDefinition = false;
+      continue;
+    }
+
+    const identifier = rest.match(/^[A-Za-z_]\w*/);
+    if (identifier) {
+      const value = identifier[0];
+      if (PYTHON_KEYWORDS.has(value)) {
+        html += token("keyword", value);
+        expectDefinition = value === "def" || value === "class";
+      } else if (expectDefinition) {
+        html += token("function", value);
+        expectDefinition = false;
+      } else if (["True", "False", "None", "NotImplemented", "Ellipsis"].includes(value)) {
+        html += token("constant", value);
+      } else if (PYTHON_BUILTINS.has(value)) {
+        html += token("builtin", value);
+      } else {
+        html += escapeHtml(value);
+      }
+      index += value.length;
+      continue;
+    }
+
+    if (/^[+\-*/%=<>!&|^~:]+/.test(rest)) {
+      const operator = rest.match(/^[+\-*/%=<>!&|^~:]+/)[0];
+      html += token("operator", operator);
+      index += operator.length;
+      expectDefinition = false;
+      continue;
+    }
+
+    html += escapeHtml(rest[0]);
+    if (!/\s/.test(rest[0])) expectDefinition = false;
+    index += 1;
+  }
+
+  return html;
+}
+
+function renderCodeBlock(code, infoString = "") {
+  const language = String(infoString || "").trim().split(/\s+/)[0].toLowerCase();
+  const normalizedCode = String(code || "").replace(/\n$/, "");
+  const isPython = language === "python" || language === "py";
+  const highlighted = isPython ? highlightPython(normalizedCode) : escapeHtml(normalizedCode);
+  const label = language ? language.toUpperCase() : "CODE";
+  const languageClass = language ? ` language-${escapeHtml(language)}` : "";
+  return `<pre class="code-block" data-language="${escapeHtml(label)}"><code class="${languageClass.trim()}">${highlighted}</code></pre>`;
 }
 
 function typesetMath(container = document.body) {
@@ -513,10 +628,15 @@ function getListRoute(type) {
 
 function renderPostPage(id, type = "post") {
   const collection = getCollection(type);
-  const post = collection.find((item) => item.id === decodeURIComponent(id || ""));
+  const requestedId = decodeURIComponent(id || "");
+  const resolvedId = type === "post" ? POST_REDIRECTS[requestedId] || requestedId : requestedId;
+  const post = collection.find((item) => item.id === resolvedId);
   if (!post) {
     els.postReader.innerHTML = `<div class="empty-state">没有找到这篇内容。<a href="#${getListRoute(type)}">返回列表</a></div>`;
     return;
+  }
+  if (resolvedId !== requestedId) {
+    history.replaceState(null, "", `#${type}/${encodeURIComponent(resolvedId)}`);
   }
   document.title = `${post.title} | Woman's World`;
   els.readerLayout?.classList.add("hide-left", "hide-right");
@@ -1149,7 +1269,8 @@ async function saveGithubFile(path, contentBase64, message, sha = "") {
 }
 
 async function saveWriterPost() {
-  const title = els.writerTitle.value.trim() || "未命名文章";
+  const title = els.writerTitle.value.trim();
+  if (!title) throw new Error("请先填写文章标题，再保存到 GitHub。");
   const path = writerState.currentPath || `content/posts/${slugify(title)}.md`;
   let sha = writerState.currentSha;
 
