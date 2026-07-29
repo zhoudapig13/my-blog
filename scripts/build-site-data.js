@@ -88,7 +88,7 @@ function loadMarkdownCollection(collectionDir) {
 
 const siteData = {
   profile: readJson("data/profile.json", {}),
-  resources: readJson("data/resources.json", { items: [] }).items || [],
+  resources: readJson("data/resources.json", { collections: [] }).collections || [],
   friends: readJson("data/friends.json", { items: [] }).items || [],
   plans: readJson("data/plans.json", { items: [] }).items || [],
   posts: loadMarkdownCollection(postsDir),

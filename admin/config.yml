@@ -55,17 +55,28 @@ collections:
           - { label: "照片", name: "photo", widget: "image", required: false }
 
       - name: "resources"
-        label: "资源"
+        label: "专题资源库"
         file: "data/resources.json"
         fields:
-          - label: "资源列表"
-            name: "items"
+          - label: "专题栏目"
+            name: "collections"
             widget: "list"
+            summary: "{{fields.title}}"
             fields:
-              - { label: "资源名称", name: "title", widget: "string" }
-              - { label: "类型", name: "type", widget: "select", options: ["PDF", "数据集", "代码", "链接", "其他"] }
-              - { label: "链接或路径", name: "url", widget: "string", required: false }
-              - { label: "说明", name: "description", widget: "text", required: false }
+              - { label: "栏目名称", name: "title", widget: "string", hint: "例如：Tabular Foundation Models" }
+              - { label: "栏目短链接", name: "slug", widget: "string", required: false, hint: "使用英文小写和短横线，例如：tabular-foundation-models" }
+              - { label: "栏目简介", name: "description", widget: "text", required: false }
+              - { label: "Markdown 导读与论文清单", name: "content", widget: "markdown", required: false, hint: "可添加标题、段落、论文超链接、学习路线与备注。" }
+              - label: "文件与链接"
+                name: "items"
+                widget: "list"
+                required: false
+                summary: "{{fields.type}} · {{fields.title}}"
+                fields:
+                  - { label: "资源名称", name: "title", widget: "string" }
+                  - { label: "类型", name: "type", widget: "select", options: ["PDF", "PPT", "代码", "数据集", "网页", "视频", "其他"] }
+                  - { label: "链接或文件路径", name: "url", widget: "string", required: false, hint: "支持 resources/ 下的本地文件路径或 https:// 外部链接。" }
+                  - { label: "一句话说明", name: "description", widget: "text", required: false }
 
       - name: "friends"
         label: "友链"

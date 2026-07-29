@@ -626,26 +626,71 @@ function renderComments(post, type = "post") {
 
 function renderResources() {
   const term = getSearchTerm();
-  const resources = state.resources.filter((resource) =>
-    [resource.title, resource.type, resource.url, resource.description].join(" ").toLowerCase().includes(term)
-  );
+  const collections = state.resources.filter((collection) => {
+    const searchableText = [
+      collection.title,
+      collection.description,
+      collection.content,
+      ...(collection.items || []).flatMap((item) => [item.title, item.type, item.url, item.description])
+    ]
+      .join(" ")
+      .toLowerCase();
+    return searchableText.includes(term);
+  });
+
   els.resourceList.innerHTML =
-    resources
+    collections
       .map(
-        (resource) => `
-          <article class="resource-card">
-            <div class="resource-meta"><span>${escapeHtml(resource.type)}</span></div>
-            <h3>${escapeHtml(resource.title)}</h3>
-            <p>${escapeHtml(resource.description || "暂无说明")}</p>
-            ${
-              resource.url
-                ? `<a href="${escapeHtml(resource.url)}" target="_blank" rel="noreferrer">打开资源</a>`
-                : '<span class="empty-state">尚未填写链接</span>'
-            }
+        (collection, index) => {
+          const items = collection.items || [];
+          const files = items
+            .map(
+              (item) => `
+                <article class="resource-file">
+                  <span class="resource-file-type">${escapeHtml(item.type || "链接")}</span>
+                  <div class="resource-file-copy">
+                    <h4>${escapeHtml(item.title || "未命名资源")}</h4>
+                    <p>${escapeHtml(item.description || "暂无说明")}</p>
+                  </div>
+                  ${
+                    item.url
+                      ? `<a class="resource-open-link" href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer" aria-label="打开 ${escapeHtml(item.title || "资源")}">打开 <span aria-hidden="true">↗</span></a>`
+                      : '<span class="resource-pending">待补充</span>'
+                  }
+                </article>
+              `
+            )
+            .join("");
+
+          return `
+          <article class="resource-collection" id="resource-${escapeHtml(collection.slug || slugify(collection.title || `collection-${index + 1}`))}">
+            <header class="resource-collection-head">
+              <div>
+                <p class="resource-index">专题 ${String(index + 1).padStart(2, "0")}</p>
+                <h3>${escapeHtml(collection.title || "未命名栏目")}</h3>
+                <p>${escapeHtml(collection.description || "这里可以添加栏目简介。")}</p>
+              </div>
+              <span class="resource-count">${items.length} 项文件</span>
+            </header>
+            <div class="resource-collection-body">
+              <section class="resource-markdown reader">
+                ${markdownToHtml(collection.content || "## 栏目导读\n\n在后台使用 Markdown 添加论文清单、学习路线或内容说明。")}
+              </section>
+              <section class="resource-files" aria-label="${escapeHtml(collection.title || "栏目")}的文件">
+                <div class="resource-files-heading">
+                  <h4>文件与链接</h4>
+                  <span>PDF · PPT · CODE · WEB</span>
+                </div>
+                ${files || '<div class="empty-state compact">这个栏目还没有添加文件。</div>'}
+              </section>
+            </div>
           </article>
-        `
+        `;
+        }
       )
-      .join("") || '<div class="empty-state">没有匹配的资源。</div>';
+      .join("") || '<div class="empty-state">没有匹配的资源栏目。</div>';
+
+  typesetMath(els.resourceList);
 }
 
 function renderFriends() {
