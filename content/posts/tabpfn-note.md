@@ -4,6 +4,7 @@ category: "随笔"
 tags:
   - "日常"
 date: "2026-05-31"
+summary: ""
 pdf: "resources/tabpfn-reading-list.pdf"
 pdfTitle: ""
 ---
@@ -64,9 +65,3 @@ sexy, confident, intelligent.
 
 
 ![粘贴图片](/my-blog/resources/uploads/pasted-1780475214156.png)
-
-- 猪头的真实面貌：
-
-
-
-![粘贴图片](/my-blog/resources/uploads/pasted-1780405315325.jpg)
