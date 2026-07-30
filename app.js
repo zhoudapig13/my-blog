@@ -437,7 +437,35 @@ function renderCodeBlock(code, infoString = "") {
   const highlighted = isPython ? highlightPython(normalizedCode) : escapeHtml(normalizedCode);
   const label = language ? language.toUpperCase() : "CODE";
   const languageClass = language ? ` language-${escapeHtml(language)}` : "";
-  return `<pre class="code-block" data-language="${escapeHtml(label)}"><code class="${languageClass.trim()}">${highlighted}</code></pre>`;
+  return `<pre class="code-block" data-language="${escapeHtml(label)}"><button class="copy-code-button" type="button" data-copy-code aria-label="复制代码">复制</button><code class="${languageClass.trim()}">${highlighted}</code></pre>`;
+}
+
+async function copyCodeBlock(button) {
+  const code = button.closest(".code-block")?.querySelector("code")?.textContent || "";
+  if (!code) return;
+
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(code);
+  } else {
+    const textarea = document.createElement("textarea");
+    textarea.value = code;
+    textarea.setAttribute("readonly", "");
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    document.body.append(textarea);
+    textarea.select();
+    const copied = document.execCommand("copy");
+    textarea.remove();
+    if (!copied) throw new Error("复制失败");
+  }
+
+  window.clearTimeout(button.copyResetTimer);
+  button.textContent = "已复制";
+  button.dataset.copied = "true";
+  button.copyResetTimer = window.setTimeout(() => {
+    button.textContent = "复制";
+    delete button.dataset.copied;
+  }, 1600);
 }
 
 function typesetMath(container = document.body) {
@@ -1329,7 +1357,18 @@ function syncReaderPanelButtons() {
   });
 }
 
-document.addEventListener("click", (event) => {
+document.addEventListener("click", async (event) => {
+  const copyButton = event.target.closest("[data-copy-code]");
+  if (copyButton) {
+    try {
+      await copyCodeBlock(copyButton);
+    } catch {
+      copyButton.textContent = "复制失败";
+      copyButton.dataset.copied = "true";
+    }
+    return;
+  }
+
   const readerPanelButton = event.target.closest("[data-reader-panel]");
   if (readerPanelButton && els.readerLayout) {
     const side = readerPanelButton.dataset.readerPanel;

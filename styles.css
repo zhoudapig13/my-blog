@@ -18,6 +18,16 @@
   --radius: 8px;
   --font-sans: "Inter", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
   --font-serif: Georgia, "Times New Roman", "Songti SC", serif;
+  --code-bg: color-mix(in srgb, var(--surface-strong) 82%, var(--accent));
+  --code-header: color-mix(in srgb, var(--surface) 73%, var(--accent));
+  --code-border: color-mix(in srgb, var(--line) 80%, var(--accent));
+  --code-text: var(--ink);
+  --code-keyword: color-mix(in srgb, var(--accent) 74%, #8f2f69);
+  --code-builtin: color-mix(in srgb, var(--accent) 72%, #156b89);
+  --code-function: color-mix(in srgb, var(--accent) 65%, #6446a0);
+  --code-string: color-mix(in srgb, var(--accent) 62%, #27784c);
+  --code-number: var(--warn);
+  --code-operator: var(--accent);
 }
 
 body[data-theme="journal"] {
@@ -91,6 +101,16 @@ body[data-theme="nightlibrary"] {
   --plan-habit: #8fcfba;
   --plan-project: #b79ce0;
   --shadow: 0 22px 56px rgba(2, 7, 12, 0.28);
+  --code-bg: #121d27;
+  --code-header: #1a2935;
+  --code-border: #30485b;
+  --code-text: #e6edf3;
+  --code-keyword: #ff8fbd;
+  --code-builtin: #82d2ff;
+  --code-function: #d2a8ff;
+  --code-string: #a8db8f;
+  --code-number: #f6c177;
+  --code-operator: #79c0ff;
   background:
     linear-gradient(180deg, rgba(127, 178, 212, 0.12), rgba(15, 23, 32, 0) 300px),
     var(--bg);
@@ -667,10 +687,10 @@ body[data-theme="nightlibrary"] .theme-strip h1 {
   overflow: auto;
   border-radius: var(--radius);
   padding: 44px 18px 18px;
-  border: 1px solid #343b44;
-  background: #20252a;
-  color: #e6edf3;
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 5%);
+  border: 1px solid var(--code-border);
+  background: var(--code-bg);
+  color: var(--code-text);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--surface-strong) 42%, transparent);
 }
 
 .reader pre.code-block::before {
@@ -680,15 +700,57 @@ body[data-theme="nightlibrary"] .theme-strip h1 {
   left: 0;
   right: 0;
   height: 30px;
-  padding: 0 14px;
-  border-bottom: 1px solid #343b44;
-  background: #292f36;
-  color: #9da7b3;
+  padding: 0 92px 0 14px;
+  border-bottom: 1px solid var(--code-border);
+  background: var(--code-header);
+  color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
   font-size: 11px;
   font-weight: 700;
   line-height: 30px;
   letter-spacing: 0.12em;
+}
+
+.copy-code-button {
+  position: absolute;
+  z-index: 1;
+  top: 4px;
+  right: 7px;
+  min-width: 58px;
+  height: 23px;
+  border: 1px solid var(--code-border);
+  border-radius: 6px;
+  padding: 0 9px;
+  background: color-mix(in srgb, var(--surface-strong) 88%, var(--accent-soft));
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 21px;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-3px);
+  transition:
+    opacity 160ms ease,
+    transform 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.code-block:hover .copy-code-button,
+.code-block:focus-within .copy-code-button,
+.copy-code-button[data-copied="true"] {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.copy-code-button:hover,
+.copy-code-button:focus-visible {
+  border-color: var(--accent);
+  color: var(--accent);
+  outline: none;
 }
 
 .reader code {
@@ -709,49 +771,63 @@ body[data-theme="nightlibrary"] .theme-strip h1 {
 }
 
 .syntax-keyword {
-  color: #ff7ab2;
+  color: var(--code-keyword);
   font-weight: 650;
 }
 
 .syntax-builtin {
-  color: #82d2ff;
+  color: var(--code-builtin);
 }
 
 .syntax-function {
-  color: #d2a8ff;
+  color: var(--code-function);
   font-weight: 650;
 }
 
 .syntax-string {
-  color: #a8db8f;
+  color: var(--code-string);
 }
 
 .syntax-comment {
-  color: #8b949e;
+  color: var(--muted);
   font-style: italic;
 }
 
 .syntax-number,
 .syntax-constant {
-  color: #f6c177;
+  color: var(--code-number);
 }
 
 .syntax-decorator {
-  color: #7ee787;
+  color: var(--code-string);
 }
 
 .syntax-operator {
-  color: #79c0ff;
+  color: var(--code-operator);
 }
 
 .reader img {
   display: block;
-  max-width: 100%;
+  max-width: 75%;
   height: auto;
   margin: 18px auto;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface-strong);
+}
+
+@media (hover: none) {
+  .copy-code-button {
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .reader img {
+    max-width: 100%;
+  }
 }
 
 .reader blockquote {
