@@ -510,7 +510,7 @@ Muon 是较新的优化方向，理解其核心思想比死背某个版本的全
 | **23. 五种优化器的显存开销如何比较？**                      | SGD 的优化器状态最少；Momentum 需要额外保存一份动量；Adam 和 AdamW 通常需要保存一阶矩、二阶矩两份状态，因此显存开销较高；Muon 需要保存动量矩阵，并带来额外矩阵计算，其具体显存和计算成本取决于实现方式。                                                                                           |
 | **24. 面对不同任务应如何选择优化器？**                      | 视觉任务或显存受限、愿意充分调参时可以考虑 SGD 或 Momentum；NLP、Transformer 和稀疏梯度任务通常使用 Adam；Transformer 预训练和微调通常优先使用 AdamW；Muon 更适合针对隐藏层二维权重进行探索性或经过验证的训练，通常与辅助 AdamW 配合使用。                                                         |
 
-## 第三轮：梯度、累积、裁剪与 loss 震荡
+## 三、梯度、累积、裁剪与 loss 震荡
 
 **1. 梯度消失和梯度爆炸从哪里来？**
 
@@ -614,7 +614,7 @@ $$
 | **Dropout 可能造成数值差异**             | 每次前向传播随机屏蔽的神经元可能不同                        | 接受统计意义上的近似；严格复现时固定随机种子和随机状态                                        | 即使平均梯度接近，也不一定与真正的大 batch 逐元素完全一致                       |
 | **混合精度和分布式计算会带来误差**              | 浮点运算顺序变化可能产生细微数值差异                        | 正确使用 scaler、梯度同步和随机数状态，并保持操作顺序一致                                   | 通常训练效果接近，但难以保证逐位完全相同                                   |
 | **语言模型要按有效 token 加权**            | 每个 token 应拥有相同权重，而不是每个 micro-batch 拥有相同权重 | 累计所有有效 token 的 loss 总和，最后除以整个窗口的有效 token 总数                        | 如果短序列和长序列的 micro-batch 被赋予相同权重，结果不等价于对全部 token 统一求平均   |
-|                                  |                                           |                                                                    |                                                        |
+
 
 
 对于大小相同的 $K$ 个 micro-batch：
@@ -636,26 +636,49 @@ $$
 import torch
 from torch.nn.utils import clip_grad_norm_
 
+# 累积 4 个 micro-batch 后更新一次参数
 accum_steps = 4
+
+# 梯度范数上限
 max_grad_norm = 1.0
+
+# 清空上一轮梯度
 optimizer.zero_grad(set_to_none=True)
 
 for micro_step, batch in enumerate(train_loader):
+
+    # 使用 BF16 混合精度进行前向计算
     with torch.autocast(device_type="cuda", dtype=torch.bfloat16):
         loss = model(**batch).loss
+
+        # 防止梯度累积后整体梯度扩大 accum_steps 倍
         scaled_loss = loss / accum_steps
 
-    # backward 只累积梯度，不更新参数
+    # 累积当前 micro-batch 的梯度，不更新参数
     scaled_loss.backward()
 
+    # 每累积 accum_steps 次，更新一次参数
     if (micro_step + 1) % accum_steps == 0:
-        # 所有 micro-batch 的梯度都到齐后，再做一次全局裁剪
-        grad_norm = clip_grad_norm_(model.parameters(), max_grad_norm)
+
+        # 裁剪梯度，返回裁剪前的梯度范数
+        grad_norm = clip_grad_norm_(
+            model.parameters(),
+            max_grad_norm
+        )
+
+        # 更新模型参数
         optimizer.step()
+
+        # 更新学习率
         scheduler.step()
+
+        # 清空梯度，开始下一轮累积
         optimizer.zero_grad(set_to_none=True)
 
-        print("原始 loss：", float(loss), "裁剪前 grad norm：", float(grad_norm))
+        print(
+            "原始 loss:", float(loss),
+            "裁剪前 grad norm:", float(grad_norm)
+        )
 ```
 
 若使用 FP16 和 `GradScaler`，顺序应为：先 `scaler.scale(loss).backward()`，累积完成后执行 `scaler.unscale_(optimizer)`，再进行梯度裁剪，最后 `scaler.step(optimizer)` 与 `scaler.update()`。原因是裁剪阈值应作用于还原后的真实梯度，而不是被 scale 放大后的梯度。BF16 动态范围更大，很多训练不使用 GradScaler，但仍要依据具体硬件与框架配置判断。
@@ -691,7 +714,7 @@ $$
 
 **第三轮自检：** 你应当能说出梯度消失/爆炸的 Jacobian 连乘解释；能写出 global norm clipping 公式；能列出梯度累积与大 batch 等价的至少四个条件；能给出 loss spike 的排查顺序。
 
-## 第四轮：代码验证、面试串讲与复习
+## 四、代码验证、面试串讲与复习
 
 **1. 建议完成的两个小实验**
 
@@ -734,6 +757,13 @@ Adam 中若把 $\lambda\theta$ 直接加到梯度，它会和任务梯度一起�
 **Q4：梯度累积是否等价于大 batch？**  
 在参数保持不变、loss 缩放一致、只执行一次 optimizer/scheduler step、累积结束后才裁剪梯度，并且没有 BatchNorm 等依赖 micro-batch 统计的操作时，累积平均梯度可以等于大 batch 梯度。变长语言模型还要按总有效 token 数加权，否则简单平均多个 micro-batch loss 不严格等价。
 
+- **batch**：批次，或一批数据
+- **loss**：损失值
+- **optimizer step**：优化器更新一步，也就是更新一次模型参数
+- **scheduler step**：学习率调度器更新一步
+- **BatchNorm**：批归一化
+- **micro-batch**：微批次，即梯度累积过程中每次实际送入模型的一小批数据
+
 **Q5：梯度裁剪解决什么问题，不能解决什么问题？**  
 它限制偶发大梯度造成的更新幅度，主要缓解梯度爆炸和异常 batch 带来的尖峰。它不能修复梯度消失、错误数据、错误 loss、长期过大学习率或已经产生的 NaN。若每一步都被裁剪，说明阈值过小或根因尚未解决。
 
@@ -744,50 +774,3 @@ Adam 中若把 $\lambda\theta$ 直接加到梯度，它会和任务梯度一起�
 - **为什么不能在 CrossEntropyLoss 前先 Softmax？** 会重复归一化，而且失去融合实现的数值稳定性；框架需要原始 logits。
 - **Muon 的一句话定义是什么？** 对隐藏层二维权重的梯度动量做 Newton–Schulz 近似正交化，再用该矩阵方向更新参数；非矩阵参数通常交给 AdamW。
 - **loss 震荡一定是训练失败吗？** 不是。mini-batch 噪声会带来正常波动；需要关注幅度是否扩大、平均趋势是否恶化、是否伴随梯度范数或更新比例异常。
-
-**4. 复习题**
-
-1. 单标签三分类任务中，模型输出形状为 `[B, 3]`，使用 `CrossEntropyLoss` 前应执行哪一步？  
-   A. Softmax　B. Sigmoid　C. 不做概率归一化　D. Argmax
-2. 写出 one-hot 标签下的交叉熵，并说明模型对错误类别非常自信时为什么损失很大。
-3. 写出 $H(p,q)$、$H(p)$ 与 $D_{\mathrm{KL}}(p\|q)$ 的关系。
-4. Adam 的一阶矩和二阶矩分别在估计什么？为什么需要偏差修正？
-5. Adam 中直接加入 L2 正则与 AdamW 的 weight decay 为什么不同？
-6. 两个 micro-batch 的有效 token 数分别为 100 和 900。若分别求 mean loss 后再等权平均，是否等价于对 1000 个 token 统一求平均？为什么？
-7. 梯度裁剪阈值设置过小会有什么表现？
-8. 某一步 forward loss 正常，执行 optimizer.step 后下一步 loss 突然暴涨。优先检查哪些量？
-9. 梯度消失与梯度爆炸如何用 Jacobian 连乘解释？
-10. Muon 为什么不通常直接应用于 bias、LayerNorm 参数和 embedding？
-
-<details>
-<summary>点击查看参考答案</summary>
-
-1. C。CrossEntropyLoss 内部会稳定地完成 LogSoftmax 与 NLLLoss。
-2. $L=-\log p_y$。当真实类别概率 $p_y$ 接近 $0$ 时，$-\log p_y$ 会迅速增大。
-3. $H(p,q)=H(p)+D_{\mathrm{KL}}(p\|q)$。
-4. 一阶矩估计近期平均梯度方向，二阶矩估计平方梯度尺度；由于状态从 $0$ 初始化，早期估计偏小，需要偏差修正。
-5. Adam 中的 L2 项会进入自适应矩估计与逐坐标缩放；AdamW 直接收缩参数，不让衰减项经过 Adam 的二阶矩缩放。
-6. 不等价。等权平均会让 100-token batch 与 900-token batch 权重相同；统一 token 平均应按有效 token 数 100:900 加权。
-7. 大量步骤都会触发裁剪，梯度范数被长期压到阈值附近，训练变慢，等效步长过小，也可能掩盖高学习率或异常数据等根因。
-8. 检查学习率、裁剪前 grad norm、update norm、UpdateRatio、优化器状态、混合精度 scaler，以及是否刚发生 scheduler 跳变或 checkpoint 恢复问题。
-9. 反向梯度是多层 Jacobian 的连乘；主要奇异值长期小于 $1$ 会指数衰减，长期大于 $1$ 会指数放大。
-10. Muon 的核心操作针对具有明确行列结构的二维隐藏层权重矩阵；一维参数没有相同的矩阵奇异方向结构，embedding 和输出头的输入统计也与普通稠密隐藏层不同，因此原始实践通常用辅助 AdamW 处理。
-
-</details>
-
-**5. 今日完成清单**
-
-- [ ] 能从 $L=-\log p_y$ 解释分类交叉熵
-- [ ] 能推导或复述 Softmax + CE 的梯度为 $p-y$
-- [ ] 能解释 $H(p,q)=H(p)+D_{\mathrm{KL}}(p\|q)$
-- [ ] 能写出 Adam 的一阶矩、二阶矩、偏差修正与更新式
-- [ ] 能解释 AdamW 的“解耦”发生在哪里
-- [ ] 能用 30 秒说明 Muon 的核心思想与适用参数
-- [ ] 能列出梯度累积等价于大 batch 的条件
-- [ ] 能解释梯度裁剪解决和不能解决的问题
-- [ ] 能按顺序排查 loss spike、NaN 和持续震荡
-- [ ] 已运行至少一个代码实验并记录结果
-
-**最后 5 分钟速记：** 分类常用交叉熵，是因为它对应分类似然、对错误自信惩罚强，且与 Softmax 合并后梯度为 $p-y$；KL 与交叉熵只差目标分布自身的熵；Adam 做逐坐标自适应，AdamW 把参数收缩从自适应梯度中分离；Muon 对隐藏层矩阵的动量更新做近似正交化；梯度累积只有在缩放、step 次数、模型状态和 token 权重等条件一致时才等价于大 batch；梯度裁剪能挡住爆炸，不能救活消失的梯度，也不能替代根因排查。
-
-**延伸资料：** Kingma & Ba, *Adam: A Method for Stochastic Optimization*；Loshchilov & Hutter, *Decoupled Weight Decay Regularization*；Keller Jordan, *Muon: An Optimizer for Hidden Layers in Neural Networks*；PyTorch 文档中的 `CrossEntropyLoss`、`AdamW` 与 `clip_grad_norm_`。
