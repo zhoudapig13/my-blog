@@ -18,16 +18,6 @@
   --radius: 8px;
   --font-sans: "Inter", "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
   --font-serif: Georgia, "Times New Roman", "Songti SC", serif;
-  --code-bg: color-mix(in srgb, var(--surface-strong) 82%, var(--accent));
-  --code-header: color-mix(in srgb, var(--surface) 73%, var(--accent));
-  --code-border: color-mix(in srgb, var(--line) 80%, var(--accent));
-  --code-text: var(--ink);
-  --code-keyword: color-mix(in srgb, var(--accent) 74%, #8f2f69);
-  --code-builtin: color-mix(in srgb, var(--accent) 72%, #156b89);
-  --code-function: color-mix(in srgb, var(--accent) 65%, #6446a0);
-  --code-string: color-mix(in srgb, var(--accent) 62%, #27784c);
-  --code-number: var(--warn);
-  --code-operator: var(--accent);
 }
 
 body[data-theme="journal"] {
@@ -143,6 +133,16 @@ html {
 }
 
 body {
+  --code-bg: color-mix(in srgb, var(--surface-strong) 82%, var(--accent));
+  --code-header: color-mix(in srgb, var(--surface) 73%, var(--accent));
+  --code-border: color-mix(in srgb, var(--line) 80%, var(--accent));
+  --code-text: var(--ink);
+  --code-keyword: color-mix(in srgb, var(--accent) 74%, #8f2f69);
+  --code-builtin: color-mix(in srgb, var(--accent) 72%, #156b89);
+  --code-function: color-mix(in srgb, var(--accent) 65%, #6446a0);
+  --code-string: color-mix(in srgb, var(--accent) 62%, #27784c);
+  --code-number: var(--warn);
+  --code-operator: var(--accent);
   margin: 0;
   min-width: 320px;
   background:
