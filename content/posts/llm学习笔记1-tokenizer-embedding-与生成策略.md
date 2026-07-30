@@ -1,5 +1,5 @@
 ---
-title: "『LLM学习笔记1』Tokenizer、Embedding 与生成策略"
+title: "『LLM学习笔记2』Tokenizer、Embedding 与生成策略"
 category: "internship"
 tags:
   []
