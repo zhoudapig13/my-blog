@@ -18,6 +18,9 @@ const POST_REDIRECTS = {
 };
 const previewTheme = new URLSearchParams(location.search).get("theme");
 let activeFilter = FILTER_ALL;
+let resourcePreviewZoom = 100;
+let resourcePreviewMode = "frame";
+let resourcePreviewBaseUrl = "";
 let writerState = {
   token: sessionStorage.getItem(TOKEN_STORAGE_KEY) || "",
   user: null,
@@ -60,11 +63,15 @@ const els = {
   resourcePreviewDialog: document.querySelector("#resourcePreviewDialog"),
   resourcePreviewTitle: document.querySelector("#resourcePreviewTitle"),
   resourcePreviewMeta: document.querySelector("#resourcePreviewMeta"),
+  resourcePreviewShell: document.querySelector(".resource-preview-shell"),
   resourcePreviewFrame: document.querySelector("#resourcePreviewFrame"),
   resourcePreviewCode: document.querySelector("#resourcePreviewCode"),
-  resourcePreviewHint: document.querySelector("#resourcePreviewHint"),
   resourcePreviewDownload: document.querySelector("#resourcePreviewDownload"),
   resourcePreviewOpen: document.querySelector("#resourcePreviewOpen"),
+  resourcePreviewZoomOut: document.querySelector("#resourcePreviewZoomOut"),
+  resourcePreviewZoomReset: document.querySelector("#resourcePreviewZoomReset"),
+  resourcePreviewZoomIn: document.querySelector("#resourcePreviewZoomIn"),
+  resourcePreviewFullscreen: document.querySelector("#resourcePreviewFullscreen"),
   resourcePreviewClose: document.querySelector("#resourcePreviewClose"),
   planList: document.querySelector("#planList"),
   planOwnerPanel: document.querySelector("#planOwnerPanel"),
@@ -873,11 +880,69 @@ function renderResources() {
   typesetMath(els.resourceList);
 }
 
+function resourcePreviewUrlAtZoom(url, zoom) {
+  const baseUrl = String(url || "").split("#")[0];
+  return `${baseUrl}#zoom=${zoom}`;
+}
+
+function applyResourcePreviewZoom(nextZoom = resourcePreviewZoom) {
+  resourcePreviewZoom = Math.min(200, Math.max(50, Math.round(nextZoom / 10) * 10));
+  if (els.resourcePreviewZoomReset) {
+    els.resourcePreviewZoomReset.textContent = `${resourcePreviewZoom}%`;
+  }
+  if (els.resourcePreviewZoomOut) els.resourcePreviewZoomOut.disabled = resourcePreviewZoom <= 50;
+  if (els.resourcePreviewZoomIn) els.resourcePreviewZoomIn.disabled = resourcePreviewZoom >= 200;
+
+  if (resourcePreviewMode === "code" && els.resourcePreviewCode) {
+    els.resourcePreviewCode.style.fontSize = `${0.94 * (resourcePreviewZoom / 100)}rem`;
+  } else if (els.resourcePreviewFrame && resourcePreviewBaseUrl) {
+    els.resourcePreviewFrame.src = resourcePreviewUrlAtZoom(resourcePreviewBaseUrl, resourcePreviewZoom);
+  }
+}
+
+function resetResourcePreviewZoom() {
+  resourcePreviewZoom = 100;
+  if (els.resourcePreviewCode) els.resourcePreviewCode.style.removeProperty("font-size");
+  applyResourcePreviewZoom(100);
+}
+
+function syncResourcePreviewFullscreenButton() {
+  if (!els.resourcePreviewFullscreen) return;
+  const isFullscreen = document.fullscreenElement === els.resourcePreviewShell
+    || els.resourcePreviewDialog?.classList.contains("is-window-fullscreen");
+  els.resourcePreviewFullscreen.textContent = isFullscreen ? "退出全屏" : "全屏";
+  els.resourcePreviewFullscreen.setAttribute("aria-label", isFullscreen ? "退出全屏预览" : "全屏预览");
+}
+
+async function toggleResourcePreviewFullscreen() {
+  if (!els.resourcePreviewDialog || !els.resourcePreviewShell) return;
+  try {
+    if (document.fullscreenElement === els.resourcePreviewShell) {
+      await document.exitFullscreen();
+    } else if (typeof els.resourcePreviewShell.requestFullscreen === "function") {
+      await els.resourcePreviewShell.requestFullscreen();
+    } else {
+      els.resourcePreviewDialog.classList.toggle("is-window-fullscreen");
+    }
+  } catch {
+    els.resourcePreviewDialog.classList.toggle("is-window-fullscreen");
+  }
+  syncResourcePreviewFullscreenButton();
+}
+
 function closeResourcePreview() {
   if (!els.resourcePreviewDialog) return;
+  if (document.fullscreenElement === els.resourcePreviewShell) {
+    document.exitFullscreen().catch(() => {});
+  }
+  els.resourcePreviewDialog.classList.remove("is-window-fullscreen");
   els.resourcePreviewDialog.close();
   els.resourcePreviewFrame.removeAttribute("src");
   els.resourcePreviewFrame.hidden = false;
+  resourcePreviewBaseUrl = "";
+  resourcePreviewMode = "frame";
+  resetResourcePreviewZoom();
+  syncResourcePreviewFullscreenButton();
   if (els.resourcePreviewCode) {
     els.resourcePreviewCode.hidden = true;
     els.resourcePreviewCode.textContent = "";
@@ -892,9 +957,9 @@ function openResourcePreview(button) {
 
   els.resourcePreviewTitle.textContent = button.dataset.previewTitle || "资源预览";
   els.resourcePreviewMeta.textContent = button.dataset.previewMeta || "";
-  if (els.resourcePreviewHint) els.resourcePreviewHint.textContent = "可在下方翻页、缩放或全屏阅读";
+  resourcePreviewMode = "frame";
+  resourcePreviewBaseUrl = previewUrl;
   els.resourcePreviewFrame.hidden = false;
-  els.resourcePreviewFrame.src = previewUrl;
   if (els.resourcePreviewCode) {
     els.resourcePreviewCode.hidden = true;
     els.resourcePreviewCode.textContent = "";
@@ -902,6 +967,7 @@ function openResourcePreview(button) {
   els.resourcePreviewDownload.href = downloadUrl;
   els.resourcePreviewDownload.setAttribute("download", "");
   els.resourcePreviewOpen.href = previewUrl;
+  resetResourcePreviewZoom();
   els.resourcePreviewDialog.showModal();
 }
 
@@ -913,7 +979,8 @@ async function openCodePreview(link) {
   const fileName = link.textContent.trim() || previewUrl.split("/").pop() || "Python 程序";
   els.resourcePreviewTitle.textContent = fileName;
   els.resourcePreviewMeta.textContent = "LLM学习笔记2 · Python 配套程序";
-  if (els.resourcePreviewHint) els.resourcePreviewHint.textContent = "可在线查看完整代码，也可以下载原文件";
+  resourcePreviewMode = "code";
+  resourcePreviewBaseUrl = previewUrl;
   els.resourcePreviewFrame.hidden = true;
   els.resourcePreviewFrame.removeAttribute("src");
   els.resourcePreviewCode.hidden = false;
@@ -921,6 +988,7 @@ async function openCodePreview(link) {
   els.resourcePreviewDownload.href = previewUrl;
   els.resourcePreviewDownload.setAttribute("download", fileName);
   els.resourcePreviewOpen.href = previewUrl;
+  resetResourcePreviewZoom();
   if (!els.resourcePreviewDialog.open) els.resourcePreviewDialog.showModal();
 
   try {
@@ -1511,10 +1579,33 @@ if (els.resourcePreviewClose) {
   els.resourcePreviewClose.addEventListener("click", closeResourcePreview);
 }
 
+if (els.resourcePreviewZoomOut) {
+  els.resourcePreviewZoomOut.addEventListener("click", () => applyResourcePreviewZoom(resourcePreviewZoom - 10));
+}
+
+if (els.resourcePreviewZoomReset) {
+  els.resourcePreviewZoomReset.addEventListener("click", resetResourcePreviewZoom);
+}
+
+if (els.resourcePreviewZoomIn) {
+  els.resourcePreviewZoomIn.addEventListener("click", () => applyResourcePreviewZoom(resourcePreviewZoom + 10));
+}
+
+if (els.resourcePreviewFullscreen) {
+  els.resourcePreviewFullscreen.addEventListener("click", toggleResourcePreviewFullscreen);
+}
+
+document.addEventListener("fullscreenchange", syncResourcePreviewFullscreenButton);
+
 if (els.resourcePreviewDialog) {
   els.resourcePreviewDialog.addEventListener("close", () => {
+    els.resourcePreviewDialog.classList.remove("is-window-fullscreen");
     els.resourcePreviewFrame.removeAttribute("src");
     els.resourcePreviewFrame.hidden = false;
+    resourcePreviewBaseUrl = "";
+    resourcePreviewMode = "frame";
+    resetResourcePreviewZoom();
+    syncResourcePreviewFullscreenButton();
     if (els.resourcePreviewCode) {
       els.resourcePreviewCode.hidden = true;
       els.resourcePreviewCode.textContent = "";

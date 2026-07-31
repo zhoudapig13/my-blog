@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Woman's World</title>
-    <link rel="stylesheet" href="styles.css?v=20260731-theme-code8" />
+    <link rel="stylesheet" href="styles.css?v=20260801-preview-controls9" />
     <script>
       window.MathJax = {
         tex: {
@@ -306,18 +306,22 @@
             <h2 id="resourcePreviewTitle">资源预览</h2>
             <p id="resourcePreviewMeta"></p>
           </div>
-          <button id="resourcePreviewClose" class="resource-preview-close" type="button" aria-label="关闭预览">×</button>
+          <div class="resource-preview-head-actions">
+            <div class="resource-preview-zoom" aria-label="预览缩放">
+              <button id="resourcePreviewZoomOut" class="resource-preview-action" type="button" aria-label="缩小预览">−</button>
+              <button id="resourcePreviewZoomReset" class="resource-preview-action resource-preview-zoom-value" type="button" aria-label="恢复原始大小">100%</button>
+              <button id="resourcePreviewZoomIn" class="resource-preview-action" type="button" aria-label="放大预览">+</button>
+            </div>
+            <a id="resourcePreviewOpen" class="resource-preview-action" href="#" target="_blank" rel="noreferrer">新窗口</a>
+            <a id="resourcePreviewDownload" class="resource-preview-action is-primary" href="#" download>下载</a>
+            <button id="resourcePreviewFullscreen" class="resource-preview-action" type="button" aria-label="全屏预览">全屏</button>
+            <button id="resourcePreviewClose" class="resource-preview-close" type="button" aria-label="关闭预览">×</button>
+          </div>
         </header>
-        <div class="resource-preview-toolbar">
-          <span id="resourcePreviewHint">可在下方翻页、缩放或全屏阅读</span>
-          <a id="resourcePreviewDownload" class="button-link" href="#" download>下载原文件</a>
+        <div class="resource-preview-viewport">
+          <iframe id="resourcePreviewFrame" title="资源文件预览"></iframe>
+          <pre id="resourcePreviewCode" class="resource-code-preview" aria-label="Python 代码预览" hidden></pre>
         </div>
-        <iframe id="resourcePreviewFrame" title="资源文件预览"></iframe>
-        <pre id="resourcePreviewCode" class="resource-code-preview" aria-label="Python 代码预览" hidden></pre>
-        <p class="resource-preview-fallback">
-          如果浏览器没有显示预览，请使用上方“下载原文件”，或
-          <a id="resourcePreviewOpen" href="#" target="_blank" rel="noreferrer">在新窗口打开预览</a>。
-        </p>
       </div>
     </dialog>
 
@@ -332,6 +336,6 @@
     </template>
 
     <script src="comments-config.js?v=20260601-reader2"></script>
-    <script src="app.js?v=20260801-code-resources9"></script>
+    <script src="app.js?v=20260801-preview-controls10"></script>
   </body>
 </html>
