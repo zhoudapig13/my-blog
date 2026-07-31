@@ -61,6 +61,8 @@ const els = {
   resourcePreviewTitle: document.querySelector("#resourcePreviewTitle"),
   resourcePreviewMeta: document.querySelector("#resourcePreviewMeta"),
   resourcePreviewFrame: document.querySelector("#resourcePreviewFrame"),
+  resourcePreviewCode: document.querySelector("#resourcePreviewCode"),
+  resourcePreviewHint: document.querySelector("#resourcePreviewHint"),
   resourcePreviewDownload: document.querySelector("#resourcePreviewDownload"),
   resourcePreviewOpen: document.querySelector("#resourcePreviewOpen"),
   resourcePreviewClose: document.querySelector("#resourcePreviewClose"),
@@ -875,6 +877,11 @@ function closeResourcePreview() {
   if (!els.resourcePreviewDialog) return;
   els.resourcePreviewDialog.close();
   els.resourcePreviewFrame.removeAttribute("src");
+  els.resourcePreviewFrame.hidden = false;
+  if (els.resourcePreviewCode) {
+    els.resourcePreviewCode.hidden = true;
+    els.resourcePreviewCode.textContent = "";
+  }
 }
 
 function openResourcePreview(button) {
@@ -885,10 +892,44 @@ function openResourcePreview(button) {
 
   els.resourcePreviewTitle.textContent = button.dataset.previewTitle || "资源预览";
   els.resourcePreviewMeta.textContent = button.dataset.previewMeta || "";
+  if (els.resourcePreviewHint) els.resourcePreviewHint.textContent = "可在下方翻页、缩放或全屏阅读";
+  els.resourcePreviewFrame.hidden = false;
   els.resourcePreviewFrame.src = previewUrl;
+  if (els.resourcePreviewCode) {
+    els.resourcePreviewCode.hidden = true;
+    els.resourcePreviewCode.textContent = "";
+  }
   els.resourcePreviewDownload.href = downloadUrl;
+  els.resourcePreviewDownload.setAttribute("download", "");
   els.resourcePreviewOpen.href = previewUrl;
   els.resourcePreviewDialog.showModal();
+}
+
+async function openCodePreview(link) {
+  if (!els.resourcePreviewDialog || !els.resourcePreviewCode) return;
+  const previewUrl = link.getAttribute("href");
+  if (!previewUrl) return;
+
+  const fileName = link.textContent.trim() || previewUrl.split("/").pop() || "Python 程序";
+  els.resourcePreviewTitle.textContent = fileName;
+  els.resourcePreviewMeta.textContent = "LLM学习笔记2 · Python 配套程序";
+  if (els.resourcePreviewHint) els.resourcePreviewHint.textContent = "可在线查看完整代码，也可以下载原文件";
+  els.resourcePreviewFrame.hidden = true;
+  els.resourcePreviewFrame.removeAttribute("src");
+  els.resourcePreviewCode.hidden = false;
+  els.resourcePreviewCode.textContent = "正在加载代码…";
+  els.resourcePreviewDownload.href = previewUrl;
+  els.resourcePreviewDownload.setAttribute("download", fileName);
+  els.resourcePreviewOpen.href = previewUrl;
+  if (!els.resourcePreviewDialog.open) els.resourcePreviewDialog.showModal();
+
+  try {
+    const response = await fetch(previewUrl, { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    els.resourcePreviewCode.innerHTML = highlightPython(await response.text());
+  } catch {
+    els.resourcePreviewCode.textContent = "代码预览加载失败，请使用上方按钮下载原文件。";
+  }
 }
 
 function renderFriends() {
@@ -1358,6 +1399,13 @@ function syncReaderPanelButtons() {
 }
 
 document.addEventListener("click", async (event) => {
+  const codeResourceLink = event.target.closest('.reader a[href$=".py"]');
+  if (codeResourceLink) {
+    event.preventDefault();
+    await openCodePreview(codeResourceLink);
+    return;
+  }
+
   const copyButton = event.target.closest("[data-copy-code]");
   if (copyButton) {
     try {
@@ -1466,6 +1514,11 @@ if (els.resourcePreviewClose) {
 if (els.resourcePreviewDialog) {
   els.resourcePreviewDialog.addEventListener("close", () => {
     els.resourcePreviewFrame.removeAttribute("src");
+    els.resourcePreviewFrame.hidden = false;
+    if (els.resourcePreviewCode) {
+      els.resourcePreviewCode.hidden = true;
+      els.resourcePreviewCode.textContent = "";
+    }
   });
   els.resourcePreviewDialog.addEventListener("click", (event) => {
     if (event.target === els.resourcePreviewDialog) closeResourcePreview();

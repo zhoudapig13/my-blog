@@ -9,6 +9,18 @@ pdf: ""
 pdfTitle: ""
 ---
 
+## 配套 Python 程序
+
+下面 5 个程序与本文内容对应。点击文件名可以在博客内直接预览代码，预览窗口右上方提供原文件下载。
+
+- [01_bpe_from_scratch.py](resources/01_bpe_from_scratch.py) — 从零实现一个简化版 BPE，观察词表与合并规则如何生成。
+- [02_tokenizer.py](resources/02_tokenizer.py) — 使用 Qwen Tokenizer 对多种文本进行切分、编码与解码。
+- [03_embedding.py](resources/03_embedding.py) — 查看 token ID 如何经过 Embedding 转换成向量表示。
+- [04_softmax_sampling.py](resources/04_softmax_sampling.py) — 对比 Softmax、temperature、top-k 与 top-p 采样。
+- [05_qwen_full_pipeline.py](resources/05_qwen_full_pipeline.py) — 串联 Qwen 的 Tokenizer、Embedding、前向计算与生成流程。
+
+---
+
 ## 一、Tokenizer 与分词算法
 
 **1. 为什么模型不能直接读取文字？**

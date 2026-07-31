@@ -309,10 +309,11 @@
           <button id="resourcePreviewClose" class="resource-preview-close" type="button" aria-label="关闭预览">×</button>
         </header>
         <div class="resource-preview-toolbar">
-          <span>可在下方翻页、缩放或全屏阅读</span>
+          <span id="resourcePreviewHint">可在下方翻页、缩放或全屏阅读</span>
           <a id="resourcePreviewDownload" class="button-link" href="#" download>下载原文件</a>
         </div>
         <iframe id="resourcePreviewFrame" title="资源文件预览"></iframe>
+        <pre id="resourcePreviewCode" class="resource-code-preview" aria-label="Python 代码预览" hidden></pre>
         <p class="resource-preview-fallback">
           如果浏览器没有显示预览，请使用上方“下载原文件”，或
           <a id="resourcePreviewOpen" href="#" target="_blank" rel="noreferrer">在新窗口打开预览</a>。
@@ -331,6 +332,6 @@
     </template>
 
     <script src="comments-config.js?v=20260601-reader2"></script>
-    <script src="app.js?v=20260731-code-image7"></script>
+    <script src="app.js?v=20260801-code-resources9"></script>
   </body>
 </html>
