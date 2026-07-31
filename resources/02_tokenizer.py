@@ -89,3 +89,41 @@ def main():
 if __name__ == "__main__":
     main()
 
+
+# ============================== 实际运行输出 ==============================
+# 词表大小：151665
+# EOS token / ID：'<|im_end|>' 151645
+#
+# 文本：Machine learning is interesting.
+# tokens：['Machine', 'Ġlearning', 'Ġis', 'Ġinteresting', '.']
+# token IDs：[21605, 6832, 374, 7040, 13]
+# token 数：5
+# 解码：Machine learning is interesting.
+#
+# 文本：机器学习很有趣。
+# token IDs：[102182, 100134, 99165, 103027, 1773]
+# token 数：5
+# 解码：机器学习很有趣。
+#
+# 文本：ChatGPT-2026
+# token IDs：[15672, 38, 2828, 12, 17, 15, 17, 21]
+# token 数：8
+# 解码：ChatGPT-2026
+#
+# 文本：😂🚀
+# token IDs：[144185, 145836]
+# token 数：2
+# 解码：😂🚀
+#
+# 文本：龘靐齉
+# token IDs：[82912, 246, 21012, 238, 122125]
+# token 数：5
+# 解码：龘靐齉
+#
+# Batch attention_mask：
+# tensor([[1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0],
+#         [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]])
+# Batch shape [B,L]：(2, 11)
+#
+# 说明：token 中类似“å¤§”的内容是 Byte-level tokenizer 的内部显示形式；
+# decode() 的结果仍能正确还原原始中文。

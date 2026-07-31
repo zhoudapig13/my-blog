@@ -204,3 +204,37 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# =========================== 本机运行状态与输出格式 =========================
+# 本机已成功验证 tokenizer、torch、transformers 和本文件语法。
+# 运行停在 AutoModelForCausalLM.from_pretrained()：Hugging Face 模型权重
+# 大文件没有产生下载进度，因此本次没有真实的模型前向传播和生成输出。
+#
+# 网络正常、模型权重下载完成后，本程序会按以下格式输出：
+#
+# device / dtype：cpu torch.float32
+#
+# [1] Tokenizer
+# 原始文本：大语言模型正在改变自然语言处理。
+# tokens：[...]                         # 实际 tokenizer 切分
+# input_ids：[[...]]                    # 实际 token ID
+# input_ids shape [B,L]：(1, L)
+#
+# [2] Embedding
+# weight shape [V,d]：(V, d)
+# output shape [B,L,d]：(1, L, d)
+#
+# [3] LM Head
+# logits shape [B,L,V]：(1, L, V)
+# 概率最高的 5 个下一 token 候选：
+# 候选='...'，id=...，p=...
+#
+# [4] Greedy：
+# <模型实际生成的文本>
+#
+# [5] Sampling：
+# <模型在随机种子 42 下实际生成的文本>
+#
+# 其中 L、V、d、候选 token 和生成文本必须以成功运行后的真实输出为准，
+# 所以这里不填写预测值或伪造结果。
