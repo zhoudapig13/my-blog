@@ -1,10 +1,10 @@
 ---
 title: "『LLM学习笔记3』论文精读：Attention Is All You Need"
-category: "未分类"
+category: "internship"
 tags:
-  []
+  - "LLM"
 date: "2026-08-03"
-summary: ""
+summary: "精读《Attention Is All You Need》，从循环模型的局限出发，系统拆解 Transformer 的编码器—解码器、自注意力、多头注意力、位置编码、训练方法与实验结果，并比较不同序列建模方式的复杂度。"
 pdf: "https://arxiv.org/pdf/1706.03762"
 pdfTitle: "Attention Is All You Need"
 ---

@@ -4,7 +4,7 @@ category: "internship"
 tags:
   - "LLM"
 date: "2026-07-30"
-summary: "学习深度学习中的损失函数、优化器与梯度机制，掌握交叉熵、KL散度、Softmax等核心概念，理解SGD、AdamW等优化算法原理，并分析梯度消失、爆炸、裁剪及训练稳定性问题。"
+summary: "系统梳理深度学习中的损失函数、优化器与梯度机制，涵盖 MSE、交叉熵、KL 散度、Softmax、SGD、AdamW、梯度累积与裁剪，并结合代码和常见问题理解训练稳定性。"
 pdf: ""
 pdfTitle: ""
 ---

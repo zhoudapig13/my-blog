@@ -2,9 +2,9 @@
 title: "『LLM学习笔记2』Tokenizer、Embedding 与生成策略"
 category: "internship"
 tags:
-  []
+  - "LLM"
 date: "2026-07-31"
-summary: ""
+summary: "从 Tokenizer、BPE 与特殊 token 出发，讲解 Embedding、LM Head、logits 和 Softmax，再对比 Greedy、Beam Search、Temperature、Top-k 与 Top-p，串联文本生成的完整流程。"
 pdf: ""
 pdfTitle: ""
 ---

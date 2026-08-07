@@ -6,6 +6,7 @@ tags:
   - "transformer"
   - "通用模型"
 date: "2026-06-01"
+summary: "系统梳理 TabICL 的研究背景、分布感知列嵌入、行级特征交互与数据集级上下文学习，并总结合成数据预训练、课程学习、高效推理、实验结果、局限与展望。"
 pdf: "https://arxiv.org/pdf/2502.05564"
 pdfTitle: "A Tabular Foundation Model for In-Context Learning on Large Data"
 ---

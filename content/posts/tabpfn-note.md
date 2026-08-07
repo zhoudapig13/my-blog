@@ -4,7 +4,7 @@ category: "随笔"
 tags:
   - "日常"
 date: "2026-05-31"
-summary: ""
+summary: "介绍 Woman's World 的创作初衷与内容方向：记录机器学习、数学、论文阅读、学习计划和生活片段，把这里建设成兼具严谨、审美与真实感的个人成长空间。"
 pdf: "resources/tabpfn-reading-list.pdf"
 pdfTitle: ""
 ---
