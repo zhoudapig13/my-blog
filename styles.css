@@ -1122,6 +1122,35 @@ body[data-theme="nightlibrary"] .theme-strip h1 {
   border-top: 1px solid var(--line);
 }
 
+.writer-preview-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+#writerPreviewStatus {
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--line) 58%, transparent);
+  font-size: 0.72rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+#writerPreviewStatus[data-state="pending"] {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 70%, var(--surface));
+}
+
+.writer-preview-controls .secondary-button {
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 0.74rem;
+}
+
 .writer-preview {
   min-height: 620px;
   box-shadow: none;

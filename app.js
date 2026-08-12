@@ -26,6 +26,10 @@ let resourcePreviewBaseUrl = "";
 let obsidianDirectoryHandle = null;
 let obsidianImageIndex = null;
 let writerImageUploadInProgress = false;
+let writerPreviewTimer = null;
+let writerPreviewIdleHandle = null;
+let writerMathIdleHandle = null;
+let writerPreviewRevision = 0;
 let writerState = {
   token: sessionStorage.getItem(TOKEN_STORAGE_KEY) || "",
   user: null,
@@ -104,6 +108,8 @@ const els = {
   writerObsidianImagesInput: document.querySelector("#writerObsidianImagesInput"),
   writerObsidianStatus: document.querySelector("#writerObsidianStatus"),
   writerPreview: document.querySelector("#writerPreview"),
+  writerPreviewStatus: document.querySelector("#writerPreviewStatus"),
+  writerPreviewRefresh: document.querySelector("#writerPreviewRefresh"),
   writerCurrentPath: document.querySelector("#writerCurrentPath"),
   writerNewButton: document.querySelector("#writerNewButton"),
   writerSaveButton: document.querySelector("#writerSaveButton"),
@@ -1331,25 +1337,94 @@ function fillWriterForm(markdown, file) {
   renderWriterPreview();
 }
 
-function renderWriterPreview() {
-  if (!els.writerPreview) return;
-  const title = els.writerTitle?.value?.trim() || "文章标题";
-  const date = els.writerDate?.value || new Date().toISOString().slice(0, 10);
-  const category = els.writerCategory?.value?.trim() || "未分类";
-  const pdf = els.writerPdf?.value?.trim();
-  const pdfTitle = els.writerPdfTitle?.value?.trim();
+function setWriterPreviewStatus(message, state = "synced") {
+  if (!els.writerPreviewStatus) return;
+  els.writerPreviewStatus.textContent = message;
+  els.writerPreviewStatus.dataset.state = state;
+}
+
+function updateWriterSummaryPreview() {
   const summary = els.writerSummary?.value?.trim() || "";
   const content = els.writerContent?.value || "";
   const summaryFallback = excerpt(content, 180) || "摘要会显示在这里。";
   if (els.writerSummaryCount) els.writerSummaryCount.textContent = `${summary.length} / 180`;
   if (els.writerSummaryPreview) els.writerSummaryPreview.textContent = summary || summaryFallback;
+}
+
+function cancelWriterPreviewSchedule() {
+  if (writerPreviewTimer) window.clearTimeout(writerPreviewTimer);
+  writerPreviewTimer = null;
+  if (writerPreviewIdleHandle !== null && "cancelIdleCallback" in window) {
+    window.cancelIdleCallback(writerPreviewIdleHandle);
+  }
+  writerPreviewIdleHandle = null;
+  if (writerMathIdleHandle !== null && "cancelIdleCallback" in window) {
+    window.cancelIdleCallback(writerMathIdleHandle);
+  }
+  writerMathIdleHandle = null;
+}
+
+function scheduleWriterMath(revision, immediate = false) {
+  const content = els.writerContent?.value || "";
+  if (!content.includes("$") && !content.includes("\\(")) return;
+  const run = () => {
+    writerMathIdleHandle = null;
+    if (revision !== writerPreviewRevision) return;
+    typesetMath(els.writerPreview);
+  };
+  if (immediate || !("requestIdleCallback" in window)) {
+    window.setTimeout(run, immediate ? 0 : 700);
+  } else {
+    writerMathIdleHandle = window.requestIdleCallback(run, { timeout: 2200 });
+  }
+}
+
+function scheduleWriterPreview({ immediate = false } = {}) {
+  if (!els.writerPreview) return;
+  updateWriterSummaryPreview();
+  cancelWriterPreviewSchedule();
+  const revision = ++writerPreviewRevision;
+  const length = els.writerContent?.value?.length || 0;
+  const delay = immediate ? 0 : length > 60000 ? 1100 : length > 20000 ? 700 : 380;
+  setWriterPreviewStatus(immediate ? "正在更新…" : "等待输入停止…", "pending");
+
+  const render = () => {
+    writerPreviewIdleHandle = null;
+    if (revision !== writerPreviewRevision) return;
+    renderWriterPreview({ revision, typesetImmediately: immediate });
+  };
+  writerPreviewTimer = window.setTimeout(() => {
+    writerPreviewTimer = null;
+    if ("requestIdleCallback" in window && !immediate) {
+      writerPreviewIdleHandle = window.requestIdleCallback(render, { timeout: 1200 });
+    } else {
+      render();
+    }
+  }, delay);
+}
+
+function renderWriterPreview({ revision = ++writerPreviewRevision, typesetImmediately = true } = {}) {
+  if (!els.writerPreview) return;
+  cancelWriterPreviewSchedule();
+  const title = els.writerTitle?.value?.trim() || "文章标题";
+  const date = els.writerDate?.value || new Date().toISOString().slice(0, 10);
+  const category = els.writerCategory?.value?.trim() || "未分类";
+  const pdf = els.writerPdf?.value?.trim();
+  const pdfTitle = els.writerPdfTitle?.value?.trim();
+  const content = els.writerContent?.value || "";
+  updateWriterSummaryPreview();
+  setWriterPreviewStatus("正在更新…", "pending");
+  if (window.MathJax?.typesetClear) {
+    window.MathJax.typesetClear([els.writerPreview]);
+  }
   els.writerPreview.innerHTML = `
     <p class="eyebrow">${escapeHtml(category)} / ${escapeHtml(date)}</p>
     <h1 class="reader-title">${escapeHtml(title)}</h1>
     ${pdf ? `<p class="pdf-link"><strong>PDF：</strong><a href="${escapeHtml(pdf)}" target="_blank" rel="noreferrer">${escapeHtml(pdfTitle || "查看 PDF")}</a></p>` : ""}
     ${markdownToHtml(content)}
   `;
-  typesetMath(els.writerPreview);
+  setWriterPreviewStatus(`已同步 · ${content.length.toLocaleString()} 字符`, "synced");
+  scheduleWriterMath(revision, typesetImmediately);
 }
 
 async function verifyWriterToken(token, silent = false) {
@@ -2003,7 +2078,11 @@ if (els.writerPostSelect) {
 
 [els.writerTitle, els.writerDate, els.writerCategory, els.writerTags, els.writerPdf, els.writerPdfTitle, els.writerSummary, els.writerContent]
   .filter(Boolean)
-  .forEach((input) => input.addEventListener("input", renderWriterPreview));
+  .forEach((input) => input.addEventListener("input", () => scheduleWriterPreview()));
+
+if (els.writerPreviewRefresh) {
+  els.writerPreviewRefresh.addEventListener("click", () => scheduleWriterPreview({ immediate: true }));
+}
 
 if (els.writerNewButton) {
   els.writerNewButton.addEventListener("click", () => {
@@ -2045,7 +2124,7 @@ if (els.writerContent) {
     const pastedText = event.clipboardData?.getData("text/plain") || "";
     if (hasObsidianImageReferences(pastedText)) {
       setTimeout(async () => {
-        renderWriterPreview();
+        scheduleWriterPreview();
         try {
           if (obsidianDirectoryHandle && await hasObsidianDirectoryPermission(obsidianDirectoryHandle)) {
             await syncObsidianImagesFromDirectory();
