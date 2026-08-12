@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Woman's World</title>
-    <link rel="stylesheet" href="styles.css?v=20260813-obsidian-images11" />
+    <link rel="stylesheet" href="styles.css?v=20260813-obsidian-folder12" />
     <script>
       window.MathJax = {
         tex: {
@@ -253,11 +253,11 @@
               <input id="writerPdfTitle" type="text" placeholder="A Paper Title" />
             </label>
             <label for="writerContent">正文</label>
-            <textarea id="writerContent" rows="24" placeholder="在这里写 Markdown。可以直接 Ctrl+V 粘贴图片；从 Obsidian 复制 ![[图片.png]] 后，请点击下方按钮选择对应附件。"></textarea>
+            <textarea id="writerContent" rows="24" placeholder="在这里写 Markdown。首次关联 Obsidian 图片文件夹后，粘贴含 ![[图片.png]] 的正文会自动批量同步图片。"></textarea>
             <div class="writer-attachment-tools">
-              <button id="writerObsidianImagesButton" class="secondary-button" type="button">上传 Obsidian 附件</button>
-              <input id="writerObsidianImagesInput" type="file" accept="image/*" multiple hidden />
-              <span>支持批量选择，写作台会按文件名匹配并替换 <code>![[图片.png]]</code>。</span>
+              <button id="writerObsidianImagesButton" class="secondary-button" type="button">关联 Obsidian 图片文件夹</button>
+              <input id="writerObsidianImagesInput" type="file" accept="image/*" multiple webkitdirectory directory hidden />
+              <span id="writerObsidianStatus">关联一次附件文件夹后，粘贴含 <code>![[图片.png]]</code> 的正文会自动批量上传图片。</span>
             </div>
             <div class="writer-actions">
               <button id="writerNewButton" class="secondary-button" type="button">新建</button>
@@ -339,6 +339,6 @@
     </template>
 
     <script src="comments-config.js?v=20260601-reader2"></script>
-    <script src="app.js?v=20260813-obsidian-images11"></script>
+    <script src="app.js?v=20260813-obsidian-folder12"></script>
   </body>
 </html>

@@ -1013,6 +1013,10 @@ body[data-theme="nightlibrary"] .theme-strip h1 {
   line-height: 1.55;
 }
 
+.writer-attachment-tools span[data-connected="true"] {
+  color: color-mix(in srgb, var(--accent) 78%, #20643f);
+}
+
 .writer-attachment-tools code {
   color: var(--accent);
 }

@@ -13,6 +13,8 @@ const GITHUB_OWNER = "zhoudapig13";
 const GITHUB_REPO = "my-blog";
 const GITHUB_BRANCH = "main";
 const TOKEN_STORAGE_KEY = "my-blog.github-token";
+const WRITER_SETTINGS_DB = "my-blog-writer-settings";
+const OBSIDIAN_DIRECTORY_KEY = "obsidian-directory";
 const POST_REDIRECTS = {
   "未命名文章": "llm-loss-optimizers-gradients"
 };
@@ -21,6 +23,9 @@ let activeFilter = FILTER_ALL;
 let resourcePreviewZoom = 100;
 let resourcePreviewMode = "frame";
 let resourcePreviewBaseUrl = "";
+let obsidianDirectoryHandle = null;
+let obsidianImageIndex = null;
+let writerImageUploadInProgress = false;
 let writerState = {
   token: sessionStorage.getItem(TOKEN_STORAGE_KEY) || "",
   user: null,
@@ -97,6 +102,7 @@ const els = {
   writerContent: document.querySelector("#writerContent"),
   writerObsidianImagesButton: document.querySelector("#writerObsidianImagesButton"),
   writerObsidianImagesInput: document.querySelector("#writerObsidianImagesInput"),
+  writerObsidianStatus: document.querySelector("#writerObsidianStatus"),
   writerPreview: document.querySelector("#writerPreview"),
   writerCurrentPath: document.querySelector("#writerCurrentPath"),
   writerNewButton: document.querySelector("#writerNewButton"),
@@ -1458,13 +1464,48 @@ function writerImageExtension(file) {
   return (String(file?.type || "").split("/")[1] || "png").replace("jpeg", "jpg").replace("svg+xml", "svg");
 }
 
-async function uploadWriterImage(file, prefix = "pasted", sequence = 0) {
-  const extension = writerImageExtension(file);
-  const suffix = sequence ? `-${sequence}` : "";
-  const path = `resources/uploads/${prefix}-${Date.now()}${suffix}.${extension}`;
-  const bytes = new Uint8Array(await file.arrayBuffer());
-  await saveGithubFile(path, bytesToBase64(bytes), `Upload pasted image: ${file.name || path}`);
-  return `/my-blog/${path}`;
+async function uploadWriterImageBatch(files, prefix = "pasted") {
+  const images = [...files];
+  const stamp = Date.now();
+  const prepared = [];
+  for (const [index, file] of images.entries()) {
+    setWriterMessage(els.writerSaveMessage, `正在准备图片 ${index + 1} / ${images.length}：${file.name}`, "info");
+    const extension = writerImageExtension(file);
+    const path = `resources/uploads/${prefix}-${stamp}-${index + 1}.${extension}`;
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    prepared.push({ file, path, content: bytesToBase64(bytes) });
+  }
+
+  const ref = await githubRequest(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/ref/heads/${GITHUB_BRANCH}`);
+  const parentCommit = await githubRequest(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/commits/${ref.object.sha}`);
+  const treeEntries = [];
+  for (const [index, item] of prepared.entries()) {
+    setWriterMessage(els.writerSaveMessage, `正在上传图片 ${index + 1} / ${prepared.length}：${item.file.name}`, "info");
+    const blob = await githubRequest(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/blobs`, {
+      method: "POST",
+      body: JSON.stringify({ content: item.content, encoding: "base64" })
+    });
+    treeEntries.push({ path: item.path, mode: "100644", type: "blob", sha: blob.sha });
+  }
+
+  const tree = await githubRequest(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/trees`, {
+    method: "POST",
+    body: JSON.stringify({ base_tree: parentCommit.tree.sha, tree: treeEntries })
+  });
+  const commit = await githubRequest(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/commits`, {
+    method: "POST",
+    body: JSON.stringify({
+      message: `Upload ${prepared.length} ${prefix === "obsidian" ? "Obsidian" : "pasted"} image${prepared.length > 1 ? "s" : ""}`,
+      tree: tree.sha,
+      parents: [ref.object.sha]
+    })
+  });
+  await githubRequest(`/repos/${GITHUB_OWNER}/${GITHUB_REPO}/git/refs/heads/${GITHUB_BRANCH}`, {
+    method: "PATCH",
+    body: JSON.stringify({ sha: commit.sha, force: false })
+  });
+
+  return prepared.map((item) => ({ file: item.file, url: `/my-blog/${item.path}` }));
 }
 
 function imageReferenceBaseName(reference) {
@@ -1487,10 +1528,22 @@ function isLocalImageReference(reference) {
 }
 
 function hasObsidianImageReferences(markdown) {
+  return localImageReferenceNames(markdown).size > 0;
+}
+
+function localImageReferenceNames(markdown) {
   const text = String(markdown || "");
-  if (/!\[\[[^\]\n]+\.(?:png|jpe?g|gif|webp|svg|bmp|avif)(?:\|[^\]]+)?\]\]/i.test(text)) return true;
-  return [...text.matchAll(/!\[[^\]]*\]\(([^)\n]+)\)/gi)]
-    .some((match) => isLocalImageReference(match[1]) && /\.(?:png|jpe?g|gif|webp|svg|bmp|avif)$/i.test(imageReferenceBaseName(match[1])));
+  const names = new Set();
+  for (const match of text.matchAll(/!\[\[([^\]\n]+\.(?:png|jpe?g|gif|webp|svg|bmp|avif))(?:\|[^\]]+)?\]\]/gi)) {
+    names.add(imageReferenceBaseName(match[1]));
+  }
+  for (const match of text.matchAll(/!\[[^\]]*\]\(([^)\n]+)\)/gi)) {
+    const name = imageReferenceBaseName(match[1]);
+    if (isLocalImageReference(match[1]) && /\.(?:png|jpe?g|gif|webp|svg|bmp|avif)$/i.test(name)) {
+      names.add(name);
+    }
+  }
+  return names;
 }
 
 function replaceLocalImageReferences(markdown, fileName, uploadedUrl) {
@@ -1519,15 +1572,24 @@ function replaceLocalImageReferences(markdown, fileName, uploadedUrl) {
 }
 
 async function importWriterImages(files, prefix = "obsidian") {
+  if (writerImageUploadInProgress) throw new Error("上一批图片仍在上传，请稍候再试。");
+  writerImageUploadInProgress = true;
+  try {
+    return await performWriterImageImport(files, prefix);
+  } finally {
+    writerImageUploadInProgress = false;
+  }
+}
+
+async function performWriterImageImport(files, prefix = "obsidian") {
   const images = [...(files || [])].filter((file) => file?.type?.startsWith("image/") || /\.(?:png|jpe?g|gif|webp|svg|bmp|avif)$/i.test(file?.name || ""));
   if (!images.length) throw new Error("没有选择可上传的图片文件。");
 
   let markdown = els.writerContent.value;
   let replacedCount = 0;
   const unmatchedLinks = [];
-  for (const [index, file] of images.entries()) {
-    setWriterMessage(els.writerSaveMessage, `正在上传图片 ${index + 1} / ${images.length}：${file.name}`, "info");
-    const url = await uploadWriterImage(file, prefix, index);
+  const uploaded = await uploadWriterImageBatch(images, prefix);
+  for (const { file, url } of uploaded) {
     const result = replaceLocalImageReferences(markdown, file.name, url);
     markdown = result.markdown;
     replacedCount += result.replacements;
@@ -1546,6 +1608,163 @@ async function importWriterImages(files, prefix = "obsidian") {
     ? `已上传 ${images.length} 张图片并替换 ${replacedCount} 处链接；仍有未匹配附件，请继续选择对应文件。`
     : `已上传 ${images.length} 张图片并替换 ${replacedCount} 处链接，预览已更新。`;
   setWriterMessage(els.writerSaveMessage, message, remaining ? "info" : "success");
+}
+
+function setObsidianDirectoryStatus(message, connected = false) {
+  if (els.writerObsidianStatus) {
+    els.writerObsidianStatus.innerHTML = message;
+    els.writerObsidianStatus.dataset.connected = connected ? "true" : "false";
+  }
+  if (els.writerObsidianImagesButton) {
+    els.writerObsidianImagesButton.textContent = connected ? "更换 Obsidian 图片文件夹" : "关联 Obsidian 图片文件夹";
+  }
+}
+
+function openWriterSettingsDb() {
+  if (!("indexedDB" in window)) return Promise.resolve(null);
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(WRITER_SETTINGS_DB, 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains("settings")) {
+        request.result.createObjectStore("settings");
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function saveObsidianDirectoryHandle(handle) {
+  try {
+    const db = await openWriterSettingsDb();
+    if (!db) return;
+    await new Promise((resolve, reject) => {
+      const transaction = db.transaction("settings", "readwrite");
+      transaction.objectStore("settings").put(handle, OBSIDIAN_DIRECTORY_KEY);
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  } catch {
+    // 某些隐私模式不允许持久化文件夹句柄，当前页面仍可继续使用。
+  }
+}
+
+async function loadObsidianDirectoryHandle() {
+  try {
+    const db = await openWriterSettingsDb();
+    if (!db) return null;
+    const handle = await new Promise((resolve, reject) => {
+      const request = db.transaction("settings", "readonly").objectStore("settings").get(OBSIDIAN_DIRECTORY_KEY);
+      request.onsuccess = () => resolve(request.result || null);
+      request.onerror = () => reject(request.error);
+    });
+    db.close();
+    return handle;
+  } catch {
+    return null;
+  }
+}
+
+async function hasObsidianDirectoryPermission(handle, request = false) {
+  if (!handle) return false;
+  const options = { mode: "read" };
+  if (typeof handle.queryPermission === "function" && await handle.queryPermission(options) === "granted") {
+    return true;
+  }
+  return Boolean(request
+    && typeof handle.requestPermission === "function"
+    && await handle.requestPermission(options) === "granted");
+}
+
+async function restoreObsidianDirectory() {
+  const handle = await loadObsidianDirectoryHandle();
+  if (!handle) return;
+  obsidianDirectoryHandle = handle;
+  if (await hasObsidianDirectoryPermission(handle)) {
+    setObsidianDirectoryStatus(`已关联：<strong>${escapeHtml(handle.name)}</strong>。粘贴 Obsidian 正文时会自动同步图片。`, true);
+  } else {
+    setObsidianDirectoryStatus(`已记住文件夹 <strong>${escapeHtml(handle.name)}</strong>，点击按钮恢复读取权限。`);
+  }
+}
+
+async function buildObsidianImageIndex(directoryHandle) {
+  const index = new Map();
+  async function visit(handle) {
+    for await (const entry of handle.values()) {
+      if (entry.kind === "directory") {
+        await visit(entry);
+      } else if (/\.(?:png|jpe?g|gif|webp|svg|bmp|avif)$/i.test(entry.name)) {
+        const key = entry.name.toLowerCase();
+        if (!index.has(key)) index.set(key, []);
+        index.get(key).push(entry);
+      }
+    }
+  }
+  await visit(directoryHandle);
+  return index;
+}
+
+async function syncObsidianImagesFromDirectory() {
+  const referenceNames = localImageReferenceNames(els.writerContent?.value || "");
+  if (!referenceNames.size) {
+    setWriterMessage(els.writerSaveMessage, "正文中没有需要同步的 Obsidian 本地图片链接。", "info");
+    return;
+  }
+  if (!await hasObsidianDirectoryPermission(obsidianDirectoryHandle)) {
+    setWriterMessage(els.writerSaveMessage, "请先点击“关联 Obsidian 图片文件夹”恢复读取权限。", "info");
+    return;
+  }
+
+  setWriterMessage(els.writerSaveMessage, `正在附件文件夹中查找 ${referenceNames.size} 张图片...`, "info");
+  obsidianImageIndex = await buildObsidianImageIndex(obsidianDirectoryHandle);
+  const files = [];
+  const missing = [];
+  const duplicates = [];
+  for (const name of referenceNames) {
+    const matches = obsidianImageIndex.get(name) || [];
+    if (!matches.length) {
+      missing.push(name);
+      continue;
+    }
+    if (matches.length > 1) duplicates.push(name);
+    files.push(await matches[0].getFile());
+  }
+
+  if (files.length) await importWriterImages(files, "obsidian");
+  const notes = [];
+  if (missing.length) notes.push(`未找到：${missing.join("、")}`);
+  if (duplicates.length) notes.push(`发现同名文件并使用第一个：${duplicates.join("、")}`);
+  if (notes.length) {
+    setWriterMessage(els.writerSaveMessage, `已完成可匹配图片的同步。${notes.join("；")}。`, missing.length ? "info" : "success");
+  }
+}
+
+async function connectObsidianDirectory() {
+  if (obsidianDirectoryHandle && await hasObsidianDirectoryPermission(obsidianDirectoryHandle, true)) {
+    obsidianImageIndex = null;
+    setObsidianDirectoryStatus(`已关联：<strong>${escapeHtml(obsidianDirectoryHandle.name)}</strong>。粘贴 Obsidian 正文时会自动同步图片。`, true);
+    await syncObsidianImagesFromDirectory();
+    return;
+  }
+  if (typeof window.showDirectoryPicker !== "function") {
+    els.writerObsidianImagesInput.click();
+    return;
+  }
+  const handle = await window.showDirectoryPicker({ id: "obsidian-attachments", mode: "read" });
+  obsidianDirectoryHandle = handle;
+  obsidianImageIndex = null;
+  await saveObsidianDirectoryHandle(handle);
+  setObsidianDirectoryStatus(`已关联：<strong>${escapeHtml(handle.name)}</strong>。粘贴 Obsidian 正文时会自动同步图片。`, true);
+  await syncObsidianImagesFromDirectory();
+}
+
+async function importObsidianFolderFallback(fileList) {
+  const referenceNames = localImageReferenceNames(els.writerContent?.value || "");
+  const files = [...(fileList || [])].filter((file) => referenceNames.has(file.name.toLowerCase()));
+  if (!files.length) throw new Error("所选文件夹中没有找到与正文链接同名的图片。");
+  await importWriterImages(files, "obsidian");
+  setObsidianDirectoryStatus("当前浏览器无法长期关联文件夹；本次已从所选目录批量导入。", true);
 }
 
 function downloadText(fileName, text) {
@@ -1825,20 +2044,39 @@ if (els.writerContent) {
 
     const pastedText = event.clipboardData?.getData("text/plain") || "";
     if (hasObsidianImageReferences(pastedText)) {
-      setTimeout(() => {
+      setTimeout(async () => {
         renderWriterPreview();
-        setWriterMessage(els.writerSaveMessage, "已识别 Obsidian 图片链接。请点击“上传 Obsidian 附件”，选择链接对应的图片。", "info");
+        try {
+          if (obsidianDirectoryHandle && await hasObsidianDirectoryPermission(obsidianDirectoryHandle)) {
+            await syncObsidianImagesFromDirectory();
+          } else {
+            setWriterMessage(els.writerSaveMessage, "已识别 Obsidian 图片链接。关联一次图片文件夹后即可自动批量上传。", "info");
+          }
+        } catch (error) {
+          setWriterMessage(els.writerSaveMessage, `自动同步图片失败：${error.message}`, "error");
+        }
       });
     }
   });
 }
 
 if (els.writerObsidianImagesButton && els.writerObsidianImagesInput) {
-  els.writerObsidianImagesButton.addEventListener("click", () => els.writerObsidianImagesInput.click());
+  els.writerObsidianImagesButton.addEventListener("click", async () => {
+    els.writerObsidianImagesButton.disabled = true;
+    try {
+      await connectObsidianDirectory();
+    } catch (error) {
+      if (error?.name !== "AbortError") {
+        setWriterMessage(els.writerSaveMessage, `关联附件文件夹失败：${error.message}`, "error");
+      }
+    } finally {
+      els.writerObsidianImagesButton.disabled = false;
+    }
+  });
   els.writerObsidianImagesInput.addEventListener("change", async () => {
     els.writerObsidianImagesButton.disabled = true;
     try {
-      await importWriterImages(els.writerObsidianImagesInput.files, "obsidian");
+      await importObsidianFolderFallback(els.writerObsidianImagesInput.files);
     } catch (error) {
       setWriterMessage(els.writerSaveMessage, error.message, "error");
     } finally {
@@ -1850,6 +2088,7 @@ if (els.writerObsidianImagesButton && els.writerObsidianImagesInput) {
 
 loadSiteData().then(async () => {
   renderAll();
+  await restoreObsidianDirectory();
   if (writerState.token) {
     try {
       await verifyWriterToken(writerState.token, true);
