@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Woman's World</title>
-    <link rel="stylesheet" href="styles.css?v=20260801-preview-visibility10" />
+    <link rel="stylesheet" href="styles.css?v=20260813-obsidian-images11" />
     <script>
       window.MathJax = {
         tex: {
@@ -252,10 +252,13 @@
               PDF 显示名称
               <input id="writerPdfTitle" type="text" placeholder="A Paper Title" />
             </label>
-            <label>
-              正文
-              <textarea id="writerContent" rows="24" placeholder="在这里写 Markdown。可以直接 Ctrl+V 粘贴图片，图片会上传到 GitHub 并自动插入链接。"></textarea>
-            </label>
+            <label for="writerContent">正文</label>
+            <textarea id="writerContent" rows="24" placeholder="在这里写 Markdown。可以直接 Ctrl+V 粘贴图片；从 Obsidian 复制 ![[图片.png]] 后，请点击下方按钮选择对应附件。"></textarea>
+            <div class="writer-attachment-tools">
+              <button id="writerObsidianImagesButton" class="secondary-button" type="button">上传 Obsidian 附件</button>
+              <input id="writerObsidianImagesInput" type="file" accept="image/*" multiple hidden />
+              <span>支持批量选择，写作台会按文件名匹配并替换 <code>![[图片.png]]</code>。</span>
+            </div>
             <div class="writer-actions">
               <button id="writerNewButton" class="secondary-button" type="button">新建</button>
               <button id="writerSaveButton" class="button-link" type="button">保存到 GitHub</button>
@@ -336,6 +339,6 @@
     </template>
 
     <script src="comments-config.js?v=20260601-reader2"></script>
-    <script src="app.js?v=20260801-preview-controls10"></script>
+    <script src="app.js?v=20260813-obsidian-images11"></script>
   </body>
 </html>

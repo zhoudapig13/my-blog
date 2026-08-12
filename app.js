@@ -95,6 +95,8 @@ const els = {
   writerSummaryCount: document.querySelector("#writerSummaryCount"),
   writerSummaryPreview: document.querySelector("#writerSummaryPreview"),
   writerContent: document.querySelector("#writerContent"),
+  writerObsidianImagesButton: document.querySelector("#writerObsidianImagesButton"),
+  writerObsidianImagesInput: document.querySelector("#writerObsidianImagesInput"),
   writerPreview: document.querySelector("#writerPreview"),
   writerCurrentPath: document.querySelector("#writerCurrentPath"),
   writerNewButton: document.querySelector("#writerNewButton"),
@@ -325,7 +327,18 @@ function renderMarkdownTable(headers, alignments, rows) {
 
 function inlineMarkdown(value) {
   return value
-    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" loading="lazy" />')
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, (_, alt, source) => {
+      if (isLocalImageReference(source)) {
+        return `<span class="obsidian-image-placeholder">本地图片待上传：${alt || imageReferenceBaseName(source)}</span>`;
+      }
+      return `<img src="${source}" alt="${alt}" loading="lazy" />`;
+    })
+    .replace(/!\[\[([^\]\n]+\.(?:png|jpe?g|gif|webp|svg|bmp|avif))(?:\|([^\]]+))?\]\]/gi, (_, source, option) => {
+      const fileName = source.trim().split(/[\\/]/).pop();
+      const optionText = String(option || "").trim();
+      const label = optionText && !/^\d+(?:x\d+)?$/i.test(optionText) ? optionText : fileName;
+      return `<span class="obsidian-image-placeholder">Obsidian 图片待上传：${label}</span>`;
+    })
     .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
     .replace(/`([^`]+)`/g, "<code>$1</code>")
     .replace(/\[\[([^\]]+)\]\]/g, '<span class="wiki-link">$1</span>')
@@ -1437,12 +1450,102 @@ function insertAtTextarea(textarea, text) {
   textarea.focus();
 }
 
-async function uploadPastedImage(file) {
-  const extension = (file.type.split("/")[1] || "png").replace("jpeg", "jpg");
-  const path = `resources/uploads/pasted-${Date.now()}.${extension}`;
+function writerImageExtension(file) {
+  const nameExtension = String(file?.name || "").split(".").pop().toLowerCase();
+  if (/^(png|jpe?g|gif|webp|svg|bmp|avif)$/.test(nameExtension)) {
+    return nameExtension.replace("jpeg", "jpg");
+  }
+  return (String(file?.type || "").split("/")[1] || "png").replace("jpeg", "jpg").replace("svg+xml", "svg");
+}
+
+async function uploadWriterImage(file, prefix = "pasted", sequence = 0) {
+  const extension = writerImageExtension(file);
+  const suffix = sequence ? `-${sequence}` : "";
+  const path = `resources/uploads/${prefix}-${Date.now()}${suffix}.${extension}`;
   const bytes = new Uint8Array(await file.arrayBuffer());
   await saveGithubFile(path, bytesToBase64(bytes), `Upload pasted image: ${file.name || path}`);
   return `/my-blog/${path}`;
+}
+
+function imageReferenceBaseName(reference) {
+  let normalized = String(reference || "").trim().replace(/^<|>$/g, "");
+  normalized = normalized.split(/[?#]/)[0];
+  try {
+    normalized = decodeURIComponent(normalized);
+  } catch {
+    // 保留无法解码的原始文件名，后续仍可尝试匹配。
+  }
+  return normalized.split(/[\\/]/).pop().toLowerCase();
+}
+
+function isLocalImageReference(reference) {
+  const value = String(reference || "").trim().replace(/^<|>$/g, "");
+  return !/^(?:https?:|data:|blob:)/i.test(value)
+    && !/^(?:\.\/)?resources\//i.test(value)
+    && !value.startsWith("/my-blog/")
+    && !value.startsWith("/resources/");
+}
+
+function hasObsidianImageReferences(markdown) {
+  const text = String(markdown || "");
+  if (/!\[\[[^\]\n]+\.(?:png|jpe?g|gif|webp|svg|bmp|avif)(?:\|[^\]]+)?\]\]/i.test(text)) return true;
+  return [...text.matchAll(/!\[[^\]]*\]\(([^)\n]+)\)/gi)]
+    .some((match) => isLocalImageReference(match[1]) && /\.(?:png|jpe?g|gif|webp|svg|bmp|avif)$/i.test(imageReferenceBaseName(match[1])));
+}
+
+function replaceLocalImageReferences(markdown, fileName, uploadedUrl) {
+  const targetName = imageReferenceBaseName(fileName);
+  let replacements = 0;
+  let output = String(markdown || "").replace(
+    /!\[\[([^\]\n]+\.(?:png|jpe?g|gif|webp|svg|bmp|avif))(?:\|([^\]]+))?\]\]/gi,
+    (match, source, option) => {
+      if (imageReferenceBaseName(source) !== targetName) return match;
+      const optionText = String(option || "").trim();
+      const alt = optionText && !/^\d+(?:x\d+)?$/i.test(optionText)
+        ? optionText
+        : String(fileName).replace(/\.[^.]+$/, "");
+      replacements += 1;
+      return `![${alt}](${uploadedUrl})`;
+    }
+  );
+
+  output = output.replace(/!\[([^\]]*)\]\(([^)\n]+)\)/g, (match, alt, source) => {
+    if (!isLocalImageReference(source) || imageReferenceBaseName(source) !== targetName) return match;
+    replacements += 1;
+    return `![${alt || String(fileName).replace(/\.[^.]+$/, "")}](${uploadedUrl})`;
+  });
+
+  return { markdown: output, replacements };
+}
+
+async function importWriterImages(files, prefix = "obsidian") {
+  const images = [...(files || [])].filter((file) => file?.type?.startsWith("image/") || /\.(?:png|jpe?g|gif|webp|svg|bmp|avif)$/i.test(file?.name || ""));
+  if (!images.length) throw new Error("没有选择可上传的图片文件。");
+
+  let markdown = els.writerContent.value;
+  let replacedCount = 0;
+  const unmatchedLinks = [];
+  for (const [index, file] of images.entries()) {
+    setWriterMessage(els.writerSaveMessage, `正在上传图片 ${index + 1} / ${images.length}：${file.name}`, "info");
+    const url = await uploadWriterImage(file, prefix, index);
+    const result = replaceLocalImageReferences(markdown, file.name, url);
+    markdown = result.markdown;
+    replacedCount += result.replacements;
+    if (!result.replacements) {
+      unmatchedLinks.push(`![${file.name.replace(/\.[^.]+$/, "")}](${url})`);
+    }
+  }
+
+  els.writerContent.value = markdown;
+  if (unmatchedLinks.length) {
+    insertAtTextarea(els.writerContent, `\n${unmatchedLinks.join("\n")}\n`);
+  }
+  renderWriterPreview();
+  const remaining = hasObsidianImageReferences(els.writerContent.value);
+  const message = remaining
+    ? `已上传 ${images.length} 张图片并替换 ${replacedCount} 处链接；仍有未匹配附件，请继续选择对应文件。`
+    : `已上传 ${images.length} 张图片并替换 ${replacedCount} 处链接，预览已更新。`;
+  setWriterMessage(els.writerSaveMessage, message, remaining ? "info" : "success");
 }
 
 function downloadText(fileName, text) {
@@ -1706,19 +1809,41 @@ if (els.writerSaveButton) {
 
 if (els.writerContent) {
   els.writerContent.addEventListener("paste", async (event) => {
-    const imageItem = [...(event.clipboardData?.items || [])].find((item) => item.type.startsWith("image/"));
-    if (!imageItem || writerState.user?.login !== GITHUB_OWNER) return;
-    event.preventDefault();
-    const file = imageItem.getAsFile();
-    if (!file) return;
-    setWriterMessage(els.writerSaveMessage, "正在上传粘贴的图片...", "info");
+    const imageFiles = [...(event.clipboardData?.items || [])]
+      .filter((item) => item.type.startsWith("image/"))
+      .map((item) => item.getAsFile())
+      .filter(Boolean);
+    if (imageFiles.length && writerState.user?.login === GITHUB_OWNER) {
+      event.preventDefault();
+      try {
+        await importWriterImages(imageFiles, "pasted");
+      } catch (error) {
+        setWriterMessage(els.writerSaveMessage, error.message, "error");
+      }
+      return;
+    }
+
+    const pastedText = event.clipboardData?.getData("text/plain") || "";
+    if (hasObsidianImageReferences(pastedText)) {
+      setTimeout(() => {
+        renderWriterPreview();
+        setWriterMessage(els.writerSaveMessage, "已识别 Obsidian 图片链接。请点击“上传 Obsidian 附件”，选择链接对应的图片。", "info");
+      });
+    }
+  });
+}
+
+if (els.writerObsidianImagesButton && els.writerObsidianImagesInput) {
+  els.writerObsidianImagesButton.addEventListener("click", () => els.writerObsidianImagesInput.click());
+  els.writerObsidianImagesInput.addEventListener("change", async () => {
+    els.writerObsidianImagesButton.disabled = true;
     try {
-      const url = await uploadPastedImage(file);
-      insertAtTextarea(els.writerContent, `\n![粘贴图片](${url})\n`);
-      renderWriterPreview();
-      setWriterMessage(els.writerSaveMessage, "图片已上传并插入 Markdown。", "success");
+      await importWriterImages(els.writerObsidianImagesInput.files, "obsidian");
     } catch (error) {
       setWriterMessage(els.writerSaveMessage, error.message, "error");
+    } finally {
+      els.writerObsidianImagesInput.value = "";
+      els.writerObsidianImagesButton.disabled = false;
     }
   });
 }

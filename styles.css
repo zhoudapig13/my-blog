@@ -998,6 +998,40 @@ body[data-theme="nightlibrary"] .theme-strip h1 {
   line-height: 1.65;
 }
 
+.writer-attachment-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: -8px;
+}
+
+.writer-attachment-tools span {
+  flex: 1 1 220px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.55;
+}
+
+.writer-attachment-tools code {
+  color: var(--accent);
+}
+
+.obsidian-image-placeholder {
+  display: grid;
+  min-height: 120px;
+  place-items: center;
+  margin: 1.25em auto;
+  border: 1px dashed color-mix(in srgb, var(--accent) 56%, var(--line));
+  border-radius: var(--radius);
+  padding: 20px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent-soft) 46%, var(--surface));
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-align: center;
+}
+
 .markdown-preview-panel {
   min-height: 720px;
 }
