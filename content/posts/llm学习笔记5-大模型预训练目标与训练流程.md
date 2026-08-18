@@ -129,7 +129,7 @@ $$
 
 原始 BERT 还加入了 NSP：给两段文本 A/B，判断 B 是否真的是 A 的下一句。它属于 BERT 原论文设计的一部分，但要注意：**NSP 不是 Encoder-only 架构的必要条件，也不是 MLM 的组成部分。** 后续很多模型会移除或重新设计句间预训练目标。面试时不要说“BERT 的本质就是 MLM+NSP”，更准确的是：BERT 的核心结构是双向 Transformer Encoder，原始预训练方案包含 MLM 与 NSP。
 
-![[Pasted image 20260818132501.png]]
+![Pasted image 20260818132501](/my-blog/resources/uploads/obsidian-1787043651200-1.png)
 
 **2）Decoder-only：为什么“预测下一个 token”足以训练 GPT？**
 
@@ -335,7 +335,7 @@ Decoder 目标：
 
 模型必须利用剩余上下文恢复被删除的 span。它既保留了 Encoder 的双向理解能力，又让 Decoder 学习条件生成。
 
-![[Pasted image 20260818133645.png]]
+![Pasted image 20260818133645](/my-blog/resources/uploads/obsidian-1787043651200-2.png)
 
 **为什么今天重点最终要落在 Decoder-only？**
 
@@ -546,7 +546,7 @@ $$
 
 两者可以同时成立的原因。
 
-![[Pasted image 20260818142052.png]]
+![Pasted image 20260818142052](/my-blog/resources/uploads/obsidian-1787043651200-3.png)
 
 **Teacher Forcing 到底是什么？**
 
@@ -647,7 +647,7 @@ $$
 
 KV Cache 能减少**重复计算**，但它没有消除“必须先知道上一 token，才能决定下一 token”这一自回归依赖。
 
-![[Pasted image 20260818144253.png]]
+![Pasted image 20260818144253](/my-blog/resources/uploads/obsidian-1787043651200-4.png)
 
 **从 hidden state 到 vocabulary logits**
 
@@ -844,7 +844,7 @@ labels 中 PAD=-100
 
 **这两个操作经常都要做，但负责不同事情。**
 
-![[Pasted image 20260818150403.png]]
+![Pasted image 20260818150403](/my-blog/resources/uploads/obsidian-1787043651200-5.png)
 
 **CrossEntropy 的张量为什么通常要 reshape？**
 
@@ -1378,7 +1378,7 @@ $$
 
 对于大模型预训练，哪怕利用率提升几个百分点，乘上数十亿、数万亿 token 后都可能对应非常大的算力差异。
 
-![[Pasted image 20260818160904.png]]
+![Pasted image 20260818160904](/my-blog/resources/uploads/obsidian-1787043651200-6.png)
 
 **9）Dynamic Padding 是什么？**
 
@@ -1595,7 +1595,7 @@ $$
 
 但一定要加一句：**“20 tokens/parameter”是非常有名的经验记忆点，不是跨模型、跨数据、跨训练目标都必须遵守的自然定律。** 后续实践会根据数据质量、重复训练、推理成本、模型架构和目标能力做不同选择。
 
-![[Pasted image 20260818163639.png]]
+![Pasted image 20260818163639](/my-blog/resources/uploads/obsidian-1787043651200-7.png)
 
 更完整地说：
 
@@ -1654,7 +1654,7 @@ gradients
 updated parameters
 ```
 
-![[Pasted image 20260818164908.png]]
+![Pasted image 20260818164908](/my-blog/resources/uploads/obsidian-1787043651200-8.png)
 
 **实验 A：先用 Hugging Face 看真实 CausalLM 的输入、logits 和 loss**
 
