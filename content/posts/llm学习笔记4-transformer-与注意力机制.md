@@ -4,7 +4,7 @@ category: "internship"
 tags:
   - "LLM"
 date: "2026-08-12"
-summary: ""
+summary: "系统梳理 Transformer 与注意力机制：从 Q/K/V、缩放点积、Mask 和多头注意力出发，进一步讲解 GQA/MQA、RoPE、归一化、FFN、FlashAttention、KV Cache 及训练与推理差异。"
 pdf: ""
 pdfTitle: ""
 ---

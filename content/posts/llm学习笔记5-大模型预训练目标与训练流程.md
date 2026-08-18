@@ -4,7 +4,7 @@ category: "internship"
 tags:
   - "LLM"
 date: "2026-08-18"
-summary: ""
+summary: "从 BERT、GPT 与 T5 的预训练目标切入，串联 Next-Token Prediction、数据清洗与去重、数据配比、Tokenization、Chunking、Packing、Batch 构建，以及一次完整的大模型训练与参数更新流程。"
 pdf: ""
 pdfTitle: ""
 ---

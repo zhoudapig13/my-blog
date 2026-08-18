@@ -1,5 +1,12 @@
+const THEME_OPTIONS = ["journal", "rose", "atelier", "garden", "brownrose", "nightlibrary"];
+const previewTheme = new URLSearchParams(location.search).get("theme");
+const initialTheme = THEME_OPTIONS.includes(previewTheme)
+  ? previewTheme
+  : THEME_OPTIONS[Math.floor(Math.random() * THEME_OPTIONS.length)];
+document.body.dataset.theme = initialTheme;
+
 let state = {
-  theme: "journal",
+  theme: initialTheme,
   profile: {},
   posts: [],
   diary: [],
@@ -18,7 +25,6 @@ const OBSIDIAN_DIRECTORY_KEY = "obsidian-directory";
 const POST_REDIRECTS = {
   "未命名文章": "llm-loss-optimizers-gradients"
 };
-const previewTheme = new URLSearchParams(location.search).get("theme");
 let activeFilter = FILTER_ALL;
 let resourcePreviewZoom = 100;
 let resourcePreviewMode = "frame";
@@ -128,7 +134,7 @@ async function loadSiteData() {
     state = {
       ...state,
       ...data,
-      theme: ["journal", "rose", "atelier", "garden", "brownrose", "nightlibrary"].includes(previewTheme)
+      theme: THEME_OPTIONS.includes(previewTheme)
         ? previewTheme
         : state.theme
     };
