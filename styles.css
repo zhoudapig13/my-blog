@@ -639,6 +639,11 @@ body[data-theme="nightlibrary"] .theme-strip h1 {
   margin-bottom: 18px;
 }
 
+.blog-page-head h2 {
+  font-size: clamp(2rem, 3.2vw, 2.65rem);
+  line-height: 1.12;
+}
+
 .blog-page-head p:last-child {
   max-width: 680px;
   margin: 10px 0 0;
