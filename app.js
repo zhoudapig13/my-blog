@@ -19,6 +19,7 @@ const FILTER_ALL = "全部";
 const GITHUB_OWNER = "zhoudapig13";
 const GITHUB_REPO = "my-blog";
 const GITHUB_BRANCH = "main";
+const HOME_PINNED_POST_ID = "llm-loss-optimizers-gradients";
 const TOKEN_STORAGE_KEY = "my-blog.github-token";
 const WRITER_SETTINGS_DB = "my-blog-writer-settings";
 const OBSIDIAN_DIRECTORY_KEY = "obsidian-directory";
@@ -658,10 +659,18 @@ function renderTaxonomy() {
     .join("");
 }
 
-function createPostCard(post, type = "post") {
+function createPostCard(post, type = "post", options = {}) {
   const template = document.querySelector("#postCardTemplate").content.cloneNode(true);
   const card = template.querySelector(".post-card");
-  card.querySelector(".post-meta").textContent = `${post.date} / ${post.category || "未分类"}`;
+  const meta = card.querySelector(".post-meta");
+  if (options.pinned) {
+    card.classList.add("is-pinned");
+    const badge = document.createElement("span");
+    badge.className = "pinned-badge";
+    badge.textContent = "置顶";
+    meta.append(badge);
+  }
+  meta.append(document.createTextNode(`${post.date} / ${post.category || "未分类"}`));
   card.querySelector("h3").textContent = post.title;
   card.querySelector("p").textContent = post.excerpt || excerpt(post.content);
   card.querySelector(".post-tags").innerHTML = post.tags
@@ -719,7 +728,14 @@ function renderPosts() {
   const posts = getFilteredPosts();
   const term = getSearchTerm();
   els.recentPosts.innerHTML = "";
-  state.posts.slice(0, 4).forEach((post) => els.recentPosts.append(createPostCard(post)));
+  const postsByDate = [...state.posts].sort((a, b) => b.date.localeCompare(a.date));
+  const pinnedPost = postsByDate.find((post) => post.id === HOME_PINNED_POST_ID);
+  const homePosts = pinnedPost
+    ? [pinnedPost, ...postsByDate.filter((post) => post.id !== HOME_PINNED_POST_ID)]
+    : postsByDate;
+  homePosts.slice(0, 4).forEach((post) => {
+    els.recentPosts.append(createPostCard(post, "post", { pinned: post.id === HOME_PINNED_POST_ID }));
+  });
 
   els.postList.innerHTML = "";
   renderBlogArchive(posts);

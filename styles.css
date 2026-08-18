@@ -576,6 +576,23 @@ body[data-theme="nightlibrary"] .theme-strip h1 {
   box-shadow: 0 28px 68px rgba(42, 78, 101, var(--card-shadow-alpha));
 }
 
+.post-card.is-pinned {
+  border-color: color-mix(in srgb, var(--accent) 52%, var(--line));
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--accent-soft) 74%, transparent), transparent 44%),
+    var(--surface);
+}
+
+.pinned-badge {
+  border-radius: 999px;
+  padding: 3px 8px;
+  color: var(--accent-ink);
+  background: var(--accent);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
 .post-card:hover,
 .post-card:focus-within {
   --card-lift: -12px;
