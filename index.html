@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Woman's World</title>
-    <link rel="stylesheet" href="styles.css?v=20260813-writer-performance13" />
+    <link rel="stylesheet" href="styles.css?v=20260818-image-lightbox15" />
     <script>
       window.MathJax = {
         tex: {
@@ -305,6 +305,21 @@
 
     </main>
 
+    <dialog id="imagePreviewDialog" class="image-preview-dialog" aria-labelledby="imagePreviewTitle">
+      <div class="image-preview-shell">
+        <header class="image-preview-head">
+          <div>
+            <p class="eyebrow">Image Preview</p>
+            <h2 id="imagePreviewTitle">图片预览</h2>
+          </div>
+          <button id="imagePreviewClose" class="image-preview-close" type="button" aria-label="关闭图片预览">×</button>
+        </header>
+        <div class="image-preview-viewport">
+          <img id="imagePreviewImage" alt="" />
+        </div>
+      </div>
+    </dialog>
+
     <dialog id="resourcePreviewDialog" class="resource-preview-dialog" aria-labelledby="resourcePreviewTitle">
       <div class="resource-preview-shell">
         <header class="resource-preview-head">
@@ -343,6 +358,6 @@
     </template>
 
     <script src="comments-config.js?v=20260601-reader2"></script>
-    <script src="app.js?v=20260818-random-theme14"></script>
+    <script src="app.js?v=20260818-image-lightbox15"></script>
   </body>
 </html>

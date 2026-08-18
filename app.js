@@ -88,6 +88,10 @@ const els = {
   resourcePreviewZoomIn: document.querySelector("#resourcePreviewZoomIn"),
   resourcePreviewFullscreen: document.querySelector("#resourcePreviewFullscreen"),
   resourcePreviewClose: document.querySelector("#resourcePreviewClose"),
+  imagePreviewDialog: document.querySelector("#imagePreviewDialog"),
+  imagePreviewImage: document.querySelector("#imagePreviewImage"),
+  imagePreviewTitle: document.querySelector("#imagePreviewTitle"),
+  imagePreviewClose: document.querySelector("#imagePreviewClose"),
   planList: document.querySelector("#planList"),
   planOwnerPanel: document.querySelector("#planOwnerPanel"),
   progressValue: document.querySelector("#progressValue"),
@@ -349,7 +353,22 @@ function inlineMarkdown(value) {
       if (isLocalImageReference(source)) {
         return `<span class="obsidian-image-placeholder">本地图片待上传：${alt || imageReferenceBaseName(source)}</span>`;
       }
-      return `<img src="${source}" alt="${alt}" loading="lazy" />`;
+      const safeSource = escapeHtml(source);
+      const safeAlt = escapeHtml(alt || "文章图片");
+      return `
+        <span class="article-image-frame">
+          <img src="${safeSource}" alt="${safeAlt}" loading="lazy" />
+          <button
+            class="image-zoom-button"
+            type="button"
+            data-image-preview
+            data-image-src="${safeSource}"
+            data-image-alt="${safeAlt}"
+            aria-label="放大浏览${safeAlt}"
+            title="放大浏览"
+          >＋</button>
+        </span>
+      `;
     })
     .replace(/!\[\[([^\]\n]+\.(?:png|jpe?g|gif|webp|svg|bmp|avif))(?:\|([^\]]+))?\]\]/gi, (_, source, option) => {
       const fileName = source.trim().split(/[\\/]/).pop();
@@ -978,6 +997,22 @@ function closeResourcePreview() {
     els.resourcePreviewCode.hidden = true;
     els.resourcePreviewCode.textContent = "";
   }
+}
+
+function openImagePreview(button) {
+  if (!els.imagePreviewDialog || !els.imagePreviewImage) return;
+  const source = button.dataset.imageSrc;
+  if (!source) return;
+  const title = button.dataset.imageAlt || "图片预览";
+  els.imagePreviewImage.src = source;
+  els.imagePreviewImage.alt = title;
+  if (els.imagePreviewTitle) els.imagePreviewTitle.textContent = title;
+  if (!els.imagePreviewDialog.open) els.imagePreviewDialog.showModal();
+}
+
+function closeImagePreview() {
+  if (!els.imagePreviewDialog?.open) return;
+  els.imagePreviewDialog.close();
 }
 
 function openResourcePreview(button) {
@@ -1870,6 +1905,12 @@ function syncReaderPanelButtons() {
 }
 
 document.addEventListener("click", async (event) => {
+  const imagePreviewButton = event.target.closest("[data-image-preview]");
+  if (imagePreviewButton) {
+    openImagePreview(imagePreviewButton);
+    return;
+  }
+
   const codeResourceLink = event.target.closest('.reader a[href$=".py"]');
   if (codeResourceLink) {
     event.preventDefault();
@@ -2088,6 +2129,19 @@ if (els.writerPostSelect) {
 
 if (els.writerPreviewRefresh) {
   els.writerPreviewRefresh.addEventListener("click", () => scheduleWriterPreview({ immediate: true }));
+}
+
+if (els.imagePreviewClose) {
+  els.imagePreviewClose.addEventListener("click", closeImagePreview);
+}
+
+if (els.imagePreviewDialog) {
+  els.imagePreviewDialog.addEventListener("close", () => {
+    els.imagePreviewImage?.removeAttribute("src");
+  });
+  els.imagePreviewDialog.addEventListener("click", (event) => {
+    if (event.target === els.imagePreviewDialog) closeImagePreview();
+  });
 }
 
 if (els.writerNewButton) {
