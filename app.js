@@ -61,6 +61,7 @@ const els = {
   profileName: document.querySelector("#profileName"),
   profileBio: document.querySelector("#profileBio"),
   recentPosts: document.querySelector("#recentPosts"),
+  blogArchive: document.querySelector("#blogArchive"),
   postList: document.querySelector("#postList"),
   diaryList: document.querySelector("#diaryList"),
   postReader: document.querySelector("#postReader"),
@@ -671,6 +672,49 @@ function createPostCard(post, type = "post") {
   return card;
 }
 
+function renderBlogArchive(posts) {
+  if (!els.blogArchive) return;
+  if (!posts.length) {
+    els.blogArchive.innerHTML = '<div class="empty-state">当前筛选条件下没有可显示的文章归档。</div>';
+    return;
+  }
+
+  const postsByYear = posts.reduce((groups, post) => {
+    const year = String(post.date || "未定日期").slice(0, 4);
+    if (!groups.has(year)) groups.set(year, []);
+    groups.get(year).push(post);
+    return groups;
+  }, new Map());
+
+  els.blogArchive.innerHTML = [...postsByYear.entries()]
+    .map(([year, yearPosts]) => `
+      <section class="archive-year">
+        <header class="archive-year-head">
+          <strong>${escapeHtml(year)}</strong>
+          <span class="archive-year-dot" aria-hidden="true"></span>
+          <span>${yearPosts.length} 篇帖子</span>
+        </header>
+        <div class="archive-entries">
+          ${yearPosts
+            .map((post) => {
+              const monthDay = /^\d{4}-\d{2}-\d{2}$/.test(post.date || "") ? post.date.slice(5) : post.date || "待定";
+              const label = post.tags[0] || post.category || "未分类";
+              return `
+                <a class="archive-entry" href="#post/${encodeURIComponent(post.id)}">
+                  <time datetime="${escapeHtml(post.date || "")}">${escapeHtml(monthDay)}</time>
+                  <span class="archive-track" aria-hidden="true"><i></i></span>
+                  <strong>${escapeHtml(post.title)}</strong>
+                  <span class="archive-entry-tag">#${escapeHtml(label)}</span>
+                </a>
+              `;
+            })
+            .join("")}
+        </div>
+      </section>
+    `)
+    .join("");
+}
+
 function renderPosts() {
   const posts = getFilteredPosts();
   const term = getSearchTerm();
@@ -678,6 +722,7 @@ function renderPosts() {
   state.posts.slice(0, 4).forEach((post) => els.recentPosts.append(createPostCard(post)));
 
   els.postList.innerHTML = "";
+  renderBlogArchive(posts);
   if (!posts.length) {
     els.postList.innerHTML = '<div class="empty-state">没有匹配的文章。换个关键词试试，或者去 GitHub CMS 发布一篇新的。</div>';
     return;

@@ -635,6 +635,164 @@ body[data-theme="nightlibrary"] .theme-strip h1 {
   gap: 14px;
 }
 
+.blog-page-head {
+  margin-bottom: 18px;
+}
+
+.blog-page-head p:last-child {
+  max-width: 680px;
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.blog-archive {
+  display: grid;
+  gap: 18px;
+  margin-bottom: clamp(34px, 6vw, 70px);
+}
+
+.archive-year {
+  --archive-date-column: 120px;
+  --archive-track-column: 36px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: calc(var(--radius) + 6px);
+  padding: clamp(22px, 4vw, 40px);
+  background:
+    radial-gradient(circle at 8% 0%, color-mix(in srgb, var(--accent-soft) 72%, transparent), transparent 36%),
+    var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.archive-year-head,
+.archive-entry {
+  display: grid;
+  grid-template-columns: var(--archive-date-column) var(--archive-track-column) minmax(0, 1fr) minmax(90px, 132px);
+  align-items: center;
+  column-gap: 12px;
+}
+
+.archive-year-head {
+  margin-bottom: 14px;
+}
+
+.archive-year-head > strong {
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  line-height: 1;
+}
+
+.archive-year-head > span:last-child {
+  grid-column: 3;
+  color: var(--muted);
+  font-size: clamp(1rem, 2vw, 1.28rem);
+}
+
+.archive-year-dot {
+  width: 18px;
+  height: 18px;
+  justify-self: center;
+  border: 3px solid var(--accent);
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+.archive-entries {
+  display: grid;
+}
+
+.archive-entry {
+  min-height: 72px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.archive-entry time {
+  justify-self: end;
+  color: var(--muted);
+  font-size: 0.96rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.archive-track {
+  position: relative;
+  align-self: stretch;
+}
+
+.archive-track::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: 50%;
+  border-left: 2px dashed color-mix(in srgb, var(--line) 76%, var(--accent));
+  transform: translateX(-1px);
+}
+
+.archive-track i {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--surface);
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--accent) 56%, var(--muted));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-soft) 72%, transparent);
+  transform: translate(-50%, -50%);
+}
+
+.archive-entry > strong {
+  padding: 8px 0;
+  color: var(--ink);
+  font-size: clamp(1rem, 2.1vw, 1.28rem);
+  line-height: 1.45;
+  transition: color 160ms ease, transform 160ms ease;
+}
+
+.archive-entry-tag {
+  justify-self: end;
+  color: var(--muted);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  transition: color 160ms ease;
+}
+
+.archive-entry:hover > strong,
+.archive-entry:focus-visible > strong,
+.archive-entry:hover .archive-entry-tag,
+.archive-entry:focus-visible .archive-entry-tag {
+  color: var(--accent);
+}
+
+.archive-entry:hover > strong,
+.archive-entry:focus-visible > strong {
+  transform: translateX(4px);
+}
+
+.archive-entry:focus-visible {
+  border-radius: var(--radius);
+  outline: 2px solid color-mix(in srgb, var(--accent) 58%, transparent);
+  outline-offset: 3px;
+}
+
+.blog-list-heading {
+  margin-bottom: 16px;
+}
+
+.blog-list-heading h2 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: clamp(1.65rem, 3vw, 2.35rem);
+}
+
+.blog-content-layout {
+  align-items: start;
+}
+
 .muted-note {
   margin: 12px 0 0;
   color: var(--muted);
@@ -2364,6 +2522,46 @@ body[data-theme="nightlibrary"] .theme-strip h1 {
   .reader-toc-sidebar {
     position: static;
     max-height: none;
+  }
+}
+
+@media (max-width: 720px) {
+  .archive-year {
+    --archive-date-column: 70px;
+    --archive-track-column: 24px;
+    padding: 22px 16px;
+  }
+
+  .archive-year-head,
+  .archive-entry {
+    grid-template-columns: var(--archive-date-column) var(--archive-track-column) minmax(0, 1fr);
+    column-gap: 7px;
+  }
+
+  .archive-year-head > span:last-child {
+    grid-column: 3;
+  }
+
+  .archive-year-dot {
+    width: 15px;
+    height: 15px;
+  }
+
+  .archive-entry {
+    min-height: 66px;
+  }
+
+  .archive-entry time {
+    font-size: 0.78rem;
+  }
+
+  .archive-entry > strong {
+    grid-column: 3;
+    font-size: 0.98rem;
+  }
+
+  .archive-entry-tag {
+    display: none;
   }
 }
 
