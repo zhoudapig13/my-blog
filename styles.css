@@ -640,7 +640,7 @@ body[data-theme="nightlibrary"] .theme-strip h1 {
 }
 
 .blog-page-head h2 {
-  font-size: clamp(2rem, 3.2vw, 2.65rem);
+  font-size: clamp(1.8rem, 2.8vw, 2.35rem);
   line-height: 1.12;
 }
 
