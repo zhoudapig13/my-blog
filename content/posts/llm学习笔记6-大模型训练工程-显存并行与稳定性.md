@@ -192,7 +192,7 @@ $$
 
 Warmup 的直觉不是“前几步模型完全不会训练”，而是训练刚开始时参数更新方向、激活尺度和 Adam 的动量统计尚未稳定，突然使用很大的峰值学习率容易产生过强更新。后期 decay 则让模型在接近较优区域时逐渐减小步长。
 
-![[Pasted image 20260820160814.png]]
+![Pasted image 20260820160814](/my-blog/resources/uploads/obsidian-1787231837489-1.png)
 
 **最重要的工程坑：梯度累积后，scheduler 的 step 数通常指 optimizer step。**
 
@@ -326,7 +326,7 @@ FP16 梯度中一些非常小的值可能直接下溢成 0，因此经典 mixed 
 
 若检测到 Inf/NaN，动态 scaler 会跳过本次更新并调整 scale。BF16 保留了与 FP32 相同数量的指数位，通常不需要依赖 loss scaling 才能覆盖大范围数值，但很多敏感算子、归约和 optimizer state 仍会保留 FP32。**混合精度不是粗暴地把整个训练脚本全部 cast 成半精度，而是让不同算子使用适合的精度。**
 
-![[Pasted image 20260818182646.png]]
+![Pasted image 20260818182646](/my-blog/resources/uploads/obsidian-1787231837489-2.png)
 
 **本轮面试题**
 
@@ -422,7 +422,7 @@ micro 4：backward + All-Reduce
 这样可以避免无意义的重复通信。要注意，`no_sync()` 通常需要包住 forward 和 backward，而不仅仅包住 `loss.backward()`，因为 DDP 会在 forward 阶段准备梯度同步相关状态。
 
 
-![[Pasted image 20260820181119.png]]
+![Pasted image 20260820181119](/my-blog/resources/uploads/obsidian-1787231837489-3.png)
 
 **DDP 解决“多张卡一起算”；Gradient Accumulation 解决“多算几批再更新”。**
 
@@ -493,7 +493,7 @@ FSDP 的包裹粒度很重要：
 
 **不要把 FSDP 说成“PyTorch 给 ZeRO-3 换了个名字”。**它们理念相近，但 API、状态管理、通信调度、offload、prefetch 和工程实现并不完全相同。面试回答可以说：FSDP 的 `FULL_SHARD` 大体对应 ZeRO-3 的“参数、梯度、优化器状态全分片”思路。
 
-![[Pasted image 20260820181921.png]]
+![Pasted image 20260820181921](/my-blog/resources/uploads/obsidian-1787231837489-4.png)
 
 分片（sharding）就是：把原本每张 GPU 都完整保存的一份东西拆成几块，让不同 GPU 各自只保存其中一部分。
 
@@ -535,7 +535,7 @@ FSDP/ZeRO-3 下，不同 rank 持有不同参数和 optimizer shard。常见 che
 
 现代 distributed checkpoint 工具可以让多 rank 并行写入，并在加载时针对新的 world size 重新分片。但即使参数能够重新分片，数据顺序、通信归约和随机数路径也可能变化，所以“换 GPU 数量恢复”不一定能做到 bitwise identical。
 
-![[Pasted image 20260820183002.png]]
+![Pasted image 20260820183002](/my-blog/resources/uploads/obsidian-1787231837489-5.png)
 
 **本轮面试题**
 
@@ -734,7 +734,7 @@ Context Parallel：
 
 术语在不同框架中可能略有差别，面试时最好先说明你采用的是哪套定义，而不是只背缩写。
 
-![[Pasted image 20260818184624.png]]
+![Pasted image 20260818184624](/my-blog/resources/uploads/obsidian-1787231837489-6.png)
 
 **5）FlashAttention：优化的是 IO，不是改写 Attention 目标**
 
@@ -781,7 +781,7 @@ FlashAttention 是 exact attention，不是稀疏近似。
 
 FlashAttention 也不是任何 shape 上都必然等比例加速。收益受 sequence length、head dimension、causal mask、dropout、硬件和 kernel 实现影响；但在长序列训练中，它通常是极关键的基础优化。
 
-![[Pasted image 20260818184600.png]]
+![Pasted image 20260818184600](/my-blog/resources/uploads/obsidian-1787231837489-7.png)
 **本轮面试题**
 
 | 面试题                                                         | 面试场景回答                                                                                                                                                                                     |
@@ -962,7 +962,7 @@ Checkpoint 频率是 trade-off：
 
 训练工程排障的核心原则是：**先把问题分类为数据、计算、数值、通信或存储，再用最小可复现配置隔离变量。**不要同时修改学习率、batch、精度和并行配置，否则即使恢复正常，也不知道真正原因。
 
-![[Pasted image 20260818185634.png]]
+![Pasted image 20260818185634](/my-blog/resources/uploads/obsidian-1787231837489-8.png)
 
 **Day 6 最终串联：面试官问“一个 70B 模型放不进单卡，你如何设计训练？”**
 
