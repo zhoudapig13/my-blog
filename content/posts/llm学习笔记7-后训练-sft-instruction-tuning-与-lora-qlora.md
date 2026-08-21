@@ -1,8 +1,8 @@
 ---
 title: "『LLM学习笔记7』后训练：SFT、Instruction Tuning 与 LoRA / QLoRA"
-category: "未分类"
+category: "internship"
 tags:
-  []
+  - "LLM"
 date: "2026-08-21"
 summary: ""
 pdf: ""
